@@ -29,8 +29,11 @@ Model obiektów jest zgodny z **wiretext** (`box / text / line / arrow / compone
 - **Dolny status bar** — tryb, współrzędne kursora, liczba obiektów, zaznaczenie, SNAP, zoom.
 - **Dodawanie** — **przeciągnij kafelek z palety na canvas** (z podglądem miejsca), albo kliknij = wstaw na środku widoku.
 - **Interakcje** — klik = zaznacz, Shift+klik = multi, drag = przesuń (snap do cel), uchwyt = resize,
-  Del = usuń, **Ctrl+Z / Ctrl+Shift+Z** = undo/redo. Warstwę można **zablokować** (kłódka) — wtedy jej obiekty
-  są nieklikalne, a warstwa jest wyraźnie oznaczona (bursztynowy pasek + 🔒).
+  Del = usuń, **Ctrl+Z / Ctrl+Shift+Z** = undo/redo, **Ctrl+C/X/V/D** = kopiuj/wytnij/wklej/duplikuj,
+  **Ctrl+T** = nowa strona (jeśli przeglądarka nie przechwyci skrótu). Warstwę można **zablokować** (kłódka).
+- **Inspector** — pełne, kontekstowe opcje per komponent: Border, State (On/Off), Body, items, list style,
+  rating, progress, **picker ikon z kategoriami** (Navigation/Actions/Status/… — wiodąca ikona dla input/button/
+  select, główny glif dla icon/image) oraz pole Notatki (✎) → Figma.
 - **Canvas** — zoom (Ctrl+scroll, +/−, Ctrl+0 reset), pan (Space/H trzymane albo środkowy przycisk).
 - **Notatki** — każdy obiekt ma pole `annotation` (✎). Notatki jadą do eksportu jako osobna warstwa.
 

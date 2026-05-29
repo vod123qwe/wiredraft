@@ -303,6 +303,20 @@
   .help-list b { color: var(--text); font-weight: 600; flex: 0 0 auto; }
   .help-list span { color: var(--text-mute); text-align: right; }
 
+  /* icon field + picker */
+  .icon-field { cursor: pointer; }
+  .icon-field .icon-cur { font-family: ui-monospace, monospace; color: var(--text); }
+  .icon-field .icon-caret { margin-left: auto; color: var(--text-mute); font-size: 9px; }
+  .icon-pop { position: fixed; right: 314px; z-index: 75; width: 256px; max-height: 348px; overflow-y: auto; display: none; background: var(--pop); border-radius: 10px; padding: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06); }
+  .icon-pop.open { display: block; }
+  .icon-pop-head { display: flex; align-items: center; justify-content: space-between; font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; font-size: 10px; color: var(--text-dim); margin-bottom: 8px; }
+  .ic-clear { background: transparent; border: none; color: var(--text-mute); cursor: pointer; font: inherit; text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .ic-clear:hover { color: var(--text); }
+  .icon-cat { font-size: 8px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-mute); margin: 8px 0 4px; }
+  .icon-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
+  .icon-cell { background: transparent; border: none; border-radius: 5px; box-shadow: inset 0 0 0 1px var(--line); color: var(--text); cursor: pointer; height: 26px; font-family: ui-monospace, monospace; font-size: 13px; padding: 0; }
+  .icon-cell:hover { background: var(--fill-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+
   .pill {
     background: var(--sidebar); border-radius: 7px; padding: 5px 8px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
@@ -529,6 +543,12 @@
   </div>
 </div>
 
+<!-- icon picker popover -->
+<div class="icon-pop" id="iconPop">
+  <div class="icon-pop-head"><span>Ikona</span><button id="iconClear" class="ic-clear">∅ brak</button></div>
+  <div id="iconGrid"></div>
+</div>
+
 <!-- import modal -->
 <div class="modal-back" id="modalBack">
   <div class="modal">
@@ -687,16 +707,17 @@ function renderObject(b, o) {
 function renderComponent(b, o, c, r, w, h) {
   const ct = o.componentType;
   const lab = o.label || '';
-  const boxed = !['divider','toggle','breadcrumb','checkbox','radio','stepper','rating','skeleton','icon','text'].includes(ct);
+  const bs = o.borderStyle || (ct === 'modal' ? 'double' : ct === 'avatar' ? 'rounded' : 'single');
+  const ic = o.icon ? o.icon + ' ' : '';
 
   switch (ct) {
     case 'button':
-      drawBoxFrame(b, c, r, w, h, 'single', 'solid');
-      drawCenteredLabel(b, c, r, w, h, lab || 'Button'); return;
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      drawCenteredLabel(b, c, r, w, h, ic + (lab || 'Button')); return;
     case 'input':
     case 'select': {
-      drawBoxFrame(b, c, r, w, h, 'single', 'solid');
-      const txt = (lab || (ct === 'select' ? 'Select' : 'Input'));
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      const txt = ic + (lab || (ct === 'select' ? 'Select' : 'Input'));
       writeText(b, c + 2, r + Math.floor(h / 2), txt.slice(0, w - 4));
       if (ct === 'select') put(b, c + w - 3, r + Math.floor(h / 2), '▾');
       return;
@@ -712,12 +733,12 @@ function renderComponent(b, o, c, r, w, h) {
     }
     case 'breadcrumb': { const items = o.items || ['Home','Page']; writeText(b, c, r, items.join(o.separator || ' > ').slice(0, w)); return; }
     case 'navbar': {
-      drawBoxFrame(b, c, r, w, h, 'single', 'solid');
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
       const items = o.navItems || [];
       writeText(b, c + 2, r + Math.floor(h / 2), ('=  ' + items.join('  ')).slice(0, w - 4)); return;
     }
     case 'tabs': {
-      drawBoxFrame(b, c, r, w, h, 'single', 'solid');
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
       const tabs = o.tabs || ['Tab 1','Tab 2'];
       writeText(b, c + 2, r + Math.floor(h / 2), tabs.join(' │ ').slice(0, w - 4)); return;
     }
@@ -727,37 +748,37 @@ function renderComponent(b, o, c, r, w, h) {
       items.forEach((it, i) => { if (r + i < doc.grid.rows) writeText(b, c, r + i, (pre(i) + it).slice(0, w)); }); return;
     }
     case 'progress': {
-      drawBoxFrame(b, c, r, w, h, 'single', 'solid');
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
       const inner = w - 2, filled = Math.round(inner * (o.progress ?? 0) / 100);
       const mid = r + Math.floor(h / 2);
       for (let i = 0; i < inner; i++) put(b, c + 1 + i, mid, i < filled ? '▓' : '░'); return;
     }
     case 'avatar': {
-      drawBoxFrame(b, c, r, w, h, 'rounded', 'solid');
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
       const ini = (lab || 'A').slice(0, 2).split('').join(' ');
       drawCenteredLabel(b, c, r, w, h, ini); return;
     }
     case 'image': {
-      drawBoxFrame(b, c, r, w, h, 'single', 'solid');
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
       // diagonal cross
       for (let i = 1; i < Math.min(w, h) - 1; i++) { /* light cross */ }
       drawCenteredLabel(b, c, r, w, h, o.icon || '⊠'); return;
     }
     case 'card':
     case 'modal': {
-      drawBoxFrame(b, c, r, w, h, ct === 'modal' ? 'double' : 'single', 'solid');
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
       if (lab) writeText(b, c + 2, r + 1, lab.slice(0, w - 4));
       for (let i = 1; i < w - 1; i++) put(b, c + i, r + 2, '─');
       if (o.body) String(o.body).split('\n').forEach((ln, i) => { if (r + 3 + i < r + h - 1) writeText(b, c + 2, r + 3 + i, ln.slice(0, w - 4)); });
       return;
     }
     case 'alert': {
-      drawBoxFrame(b, c, r, w, h, 'single', 'solid');
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
       writeText(b, c + 2, r + 1, ((ALERT_ICON[o.alertType] || 'i') + ' ' + lab).slice(0, w - 4));
       if (o.body) writeText(b, c + 2, r + 2, String(o.body).slice(0, w - 4)); return;
     }
     case 'browser': {
-      drawBoxFrame(b, c, r, w, h, 'single', 'solid');
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
       writeText(b, c + 2, r + 1, ('< > O   ' + (lab || '')).slice(0, w - 4));
       put(b, c, r + 2, '├'); put(b, c + w - 1, r + 2, '┤');
       for (let i = 1; i < w - 1; i++) put(b, c + i, r + 2, '─');
@@ -784,7 +805,7 @@ function renderComponent(b, o, c, r, w, h) {
       return;
     }
     case 'table': {
-      drawBoxFrame(b, c, r, w, h, 'single', 'solid');
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
       const cols = o.columns || ['Col 1','Col 2'];
       const cw = Math.floor((w - 2) / cols.length);
       cols.forEach((cn, i) => writeText(b, c + 1 + i * cw + 1, r + 1, cn.slice(0, cw - 1)));
@@ -793,7 +814,7 @@ function renderComponent(b, o, c, r, w, h) {
       return;
     }
     default:
-      drawBoxFrame(b, c, r, w, h, 'single', 'solid');
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
       drawCenteredLabel(b, c, r, w, h, lab || ct);
   }
 }
@@ -1190,6 +1211,45 @@ function deletePage(id) {
 
 function selObj() { return sel.size === 1 ? objById([...sel][0]) : null; }
 
+function borderSegHtml(cur) {
+  return '<div class="lbl-mini">Border</div><div class="seg" data-seg="borderStyle">' + ['single','double','rounded','heavy'].map(s => `<button data-val="${s}" class="${cur===s?'on':''}">${s[0].toUpperCase()}</button>`).join('') + '</div>';
+}
+
+/* categorized icon picker (à la wiretext) */
+const ICON_CATS = {
+  Navigation: ['←','→','↑','↓','↗','↘','↙','↖','⌂','≡','⇅','⟳'],
+  Actions: ['+','✎','✓','✕','⌕','↻','⊕','⊗','⎘','⌫','✦','⏏'],
+  Status: ['●','○','△','⚑','ⓘ','✦','★','☆','✔','✖','⊘','⏳'],
+  Communication: ['✉','✆','#','§','@','☎','✱'],
+  Content: ['★','♡','♪','⊙','▦','⊠','◷','☁','⌘','✿'],
+  Media: ['▶','■','◀','⏵','⏪','⏩','⏏','▮'],
+  Shapes: ['▲','▼','◆','◇','□','●','○','▾','▴','◁','▷','◈'],
+  Commerce: ['$','€','£','¥','¢'],
+  Math: ['×','÷','±','≠','≤','≥','∞','∑','√','π','%','∆'],
+  Misc: ['⊚','°','†','‡','…','※','✳','❖','♦','☼'],
+};
+let iconTarget = null;
+function buildIconPicker() {
+  const grid = $('#iconGrid'); if (!grid) return; grid.innerHTML = '';
+  Object.entries(ICON_CATS).forEach(([cat, glyphs]) => {
+    const h = document.createElement('div'); h.className = 'icon-cat'; h.textContent = cat; grid.appendChild(h);
+    const row = document.createElement('div'); row.className = 'icon-row';
+    glyphs.forEach(g => { const btn = document.createElement('button'); btn.className = 'icon-cell'; btn.textContent = g; btn.onclick = () => pickIcon(g); row.appendChild(btn); });
+    grid.appendChild(row);
+  });
+}
+function openIconPicker(o, anchorEl) {
+  iconTarget = o;
+  const pop = $('#iconPop'); const r = anchorEl.getBoundingClientRect();
+  pop.style.top = Math.max(12, Math.min(window.innerHeight - 360, r.top - 4)) + 'px';
+  pop.classList.add('open');
+}
+function pickIcon(g) {
+  if (!iconTarget) return; pushHistory();
+  if (g) iconTarget.icon = g; else delete iconTarget.icon;
+  $('#iconPop').classList.remove('open'); renderAll();
+}
+
 function renderProps() {
   const body = $('#propsBody');
   const o = selObj();
@@ -1212,20 +1272,27 @@ function renderProps() {
   // type-specific
   if (o.type === 'box') {
     html += '<div class="lbl-mini">Label</div>' + fld('label','T',o.label);
-    html += '<div class="lbl-mini">Border</div><div class="seg" data-seg="borderStyle">' + ['single','double','rounded','heavy'].map(s => `<button data-val="${s}" class="${o.borderStyle===s?'on':''}">${s[0].toUpperCase()}</button>`).join('') + '</div>';
+    html += borderSegHtml(o.borderStyle || 'single');
     html += '<div class="lbl-mini">Fill</div><div class="seg" data-seg="fill" style="grid-template-columns:1fr 1fr">' + ['transparent','solid'].map(s => `<button data-val="${s}" class="${(o.fill||'transparent')===s?'on':''}">${s}</button>`).join('') + '</div>';
   }
   if (o.type === 'text') html += '<div class="lbl-mini">Content</div><label class="field"><textarea class="note-input" data-prop="content">'+(o.content||'')+'</textarea></label>';
   if (o.type === 'component') {
     const ct = o.componentType;
-    if ('label' in (o)) html += '<div class="lbl-mini">Label</div>' + fld('label','T',o.label);
-    if (['checkbox','radio','toggle'].includes(ct)) html += '<div class="row"><label class="field" style="cursor:pointer"><span class="k">checked</span><input data-prop="checked" type="checkbox" '+(o.checked?'checked':'')+' style="flex:0;width:auto"></label></div>';
-    if (['navbar'].includes(ct)) html += '<div class="lbl-mini">Items (comma)</div>' + fld('navItems','≡',(o.navItems||[]).join(', '));
-    if (['tabs'].includes(ct)) html += '<div class="lbl-mini">Tabs (comma)</div>' + fld('tabs','⊟',(o.tabs||[]).join(', '));
-    if (['list','breadcrumb'].includes(ct)) html += '<div class="lbl-mini">Items (comma)</div>' + fld('items','☰',(o.items||[]).join(', '));
+    const BORDERED = ['button','input','select','navbar','tabs','card','modal','alert','table','browser','progress','image','avatar'];
+    const ICONABLE = ['icon','image','button','input','select'];
+    if ('label' in (o)) { const ll = (ct === 'input' || ct === 'select') ? 'Tekst' : 'Label'; html += '<div class="lbl-mini">' + ll + '</div>' + fld('label','T',o.label); }
+    if (['checkbox','radio','toggle'].includes(ct)) html += '<div class="lbl-mini">State</div><div class="seg" data-seg="checked" style="grid-template-columns:1fr 1fr"><button data-val="true" class="' + (o.checked !== false ? 'on' : '') + '">On</button><button data-val="false" class="' + (o.checked === false ? 'on' : '') + '">Off</button></div>';
+    if (ct === 'navbar') html += '<div class="lbl-mini">Items (comma)</div>' + fld('navItems','≡',(o.navItems||[]).join(', '));
+    if (ct === 'tabs') html += '<div class="lbl-mini">Tabs (comma)</div>' + fld('tabs','⊟',(o.tabs||[]).join(', '));
+    if (['list','breadcrumb','stepper'].includes(ct)) html += '<div class="lbl-mini">Items (comma)</div>' + fld('items','☰',(o.items||[]).join(', '));
+    if (ct === 'list') html += '<div class="lbl-mini">List style</div><div class="seg" data-seg="listStyle" style="grid-template-columns:repeat(3,1fr)">' + ['bullet','number','dash'].map(s => `<button data-val="${s}" class="${(o.listStyle||'bullet')===s?'on':''}">${s}</button>`).join('') + '</div>';
+    if (ct === 'stepper') html += '<div class="lbl-mini">Active step</div>' + fld('activeStep','#',o.activeStep ?? 0,'number','min=0');
     if (ct === 'progress') html += '<div class="lbl-mini">Progress %</div>' + fld('progress','%',o.progress,'number','min=0 max=100');
+    if (ct === 'rating') html += '<div class="lbl-mini">Rating</div><div class="row pair">' + fld('value','★',o.value ?? 0,'number') + fld('maxValue','/',o.maxValue ?? 5,'number') + '</div>';
     if (ct === 'alert') html += '<div class="lbl-mini">Type</div><div class="seg" data-seg="alertType">' + ['info','warning','error','success'].map(s=>`<button data-val="${s}" class="${(o.alertType||'info')===s?'on':''}">${s[0].toUpperCase()}</button>`).join('')+'</div>';
     if (['card','modal','alert'].includes(ct)) html += '<div class="lbl-mini">Body</div><label class="field"><textarea class="note-input" data-prop="body">'+(o.body||'')+'</textarea></label>';
+    if (BORDERED.includes(ct)) html += borderSegHtml(o.borderStyle || (ct === 'modal' ? 'double' : ct === 'avatar' ? 'rounded' : 'single'));
+    if (ICONABLE.includes(ct)) html += '<div class="lbl-mini">Icon</div><button type="button" class="field icon-field" data-iconpick><span class="k">◇</span><span class="icon-cur">' + (o.icon || '∅ brak') + '</span><span class="icon-caret">▾</span></button>';
   }
   // layer
   html += '<div class="lbl-mini">Layer</div><label class="field"><span class="k">⧉</span><select data-prop="layerId">' + doc.layers.map(l => `<option value="${l.id}" ${(o.layerId||'default')===l.id?'selected':''}>${l.name}</option>`).join('') + '</select></label>';
@@ -1255,8 +1322,15 @@ function bindProps(o) {
     inp.addEventListener('change', () => { renderObjList(); });
   });
   $('#propsBody').querySelectorAll('[data-seg]').forEach(seg => {
-    seg.querySelectorAll('button').forEach(b => b.onclick = () => { pushHistory(); o[seg.dataset.seg] = b.dataset.val; renderAll(); });
+    seg.querySelectorAll('button').forEach(b => b.onclick = () => {
+      pushHistory();
+      let v = b.dataset.val;
+      if (v === 'true') v = true; else if (v === 'false') v = false;
+      o[seg.dataset.seg] = v;
+      renderAll();
+    });
   });
+  $('#propsBody').querySelectorAll('[data-iconpick]').forEach(btn => { btn.onclick = (e) => { e.preventDefault(); openIconPicker(o, btn); }; });
 }
 
 function renderObjList() {
@@ -1430,9 +1504,14 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'h' && !typing) { hMode = true; area.classList.add('h-mode'); }
   if (typing) return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') { if (sel.size) { e.preventDefault(); copySel(false); } }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') { if (sel.size) { e.preventDefault(); copySel(true); } }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') { if (clipboard && clipboard.length) { e.preventDefault(); pasteClip(); } }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') { e.preventDefault(); if (sel.size) { copySel(false); pasteClip(); } }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 't') { e.preventDefault(); addPage(); }
   if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); view.zoom = 1; view.panX = 0; view.panY = 0; applyView(); }
   if ((e.key === 'Delete' || e.key === 'Backspace') && sel.size) { e.preventDefault(); deleteSel(); }
-  if (e.key === 'Escape') { const hp = $('#helpPop'); if (hp && hp.classList.contains('open')) hp.classList.remove('open'); sel.clear(); renderAll(); }
+  if (e.key === 'Escape') { const hp = $('#helpPop'); if (hp) hp.classList.remove('open'); const ip = $('#iconPop'); if (ip) ip.classList.remove('open'); sel.clear(); renderAll(); }
 });
 window.addEventListener('keyup', (e) => {
   if (e.code === 'Space') { spaceDown = false; if (!hMode) area.classList.remove('h-mode'); }
@@ -1440,6 +1519,30 @@ window.addEventListener('keyup', (e) => {
 });
 
 function deleteSel() { pushHistory(); doc.objects = doc.objects.filter(o => !sel.has(o.id)); sel.clear(); renderAll(); }
+
+/* ---- clipboard (copy / cut / paste objects) ---- */
+let clipboard = null;
+function copySel(cut) {
+  if (!sel.size) return;
+  clipboard = doc.objects.filter(o => sel.has(o.id)).map(o => JSON.parse(JSON.stringify(o)));
+  if (cut) deleteSel(); else toast(clipboard.length + (clipboard.length === 1 ? ' obiekt skopiowany' : ' obiektów skopiowanych'));
+}
+function pasteClip() {
+  if (!clipboard || !clipboard.length) return;
+  pushHistory();
+  const idMap = {};
+  const clones = clipboard.map(o => {
+    const c = JSON.parse(JSON.stringify(o)); const nid = uid(); idMap[o.id] = nid; c.id = nid;
+    if (!doc.layers.find(l => l.id === c.layerId)) c.layerId = doc.layers[0].id;
+    if (c.position) c.position = { col: c.position.col + 2, row: c.position.row + 2 };
+    if (c.endPosition) c.endPosition = { col: c.endPosition.col + 2, row: c.endPosition.row + 2 };
+    return c;
+  });
+  clones.forEach(c => { if (c.type === 'connector') { c.fromId = idMap[c.fromId] || c.fromId; c.toId = idMap[c.toId] || c.toId; } });
+  clones.forEach(c => doc.objects.push(c));
+  sel = new Set(clones.map(c => c.id));
+  fitGridToViewport(); renderAll();
+}
 
 /* ============================================================
    Export / Import
@@ -1579,7 +1682,12 @@ $('#zoomReset').onclick = () => { view.zoom = 1; view.panX = 0; view.panY = 0; a
 $('#addLayer').onclick = () => { pushHistory(); doc.layers.push({ id:uid(), name:'Layer '+(doc.layers.length+1), visible:true }); renderSidebar(); };
 $('#addPage').onclick = addPage;
 $('#helpBtn').onclick = (e) => { e.stopPropagation(); $('#helpPop').classList.toggle('open'); };
-document.addEventListener('pointerdown', (e) => { const pop = $('#helpPop'); if (pop && pop.classList.contains('open') && !pop.contains(e.target) && e.target.id !== 'helpBtn') pop.classList.remove('open'); });
+document.addEventListener('pointerdown', (e) => {
+  const hp = $('#helpPop'); if (hp && hp.classList.contains('open') && !hp.contains(e.target) && e.target.id !== 'helpBtn') hp.classList.remove('open');
+  const ip = $('#iconPop'); if (ip && ip.classList.contains('open') && !ip.contains(e.target) && !e.target.closest('[data-iconpick]')) ip.classList.remove('open');
+});
+$('#iconClear').onclick = () => pickIcon('');
+buildIconPicker();
 $('#copyCode').onclick = () => copyText(doc.code);
 $('#shareProject').onclick = () => { copyText(shareLink()); if (!room) goLive(); };
 

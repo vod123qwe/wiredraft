@@ -36,6 +36,9 @@ Model obiektów jest zgodny z **wiretext** (`box / text / line / arrow / compone
   Alert, Breadcrumb, Avatar, List, Stepper, Rating, Skeleton), **Inspector** (właściwości zaznaczenia + notatka),
   **Objects**, **Canvas**, **Export/Import**.
 - **Dolny status bar** — tryb, współrzędne kursora, liczba obiektów, zaznaczenie, SNAP, zoom.
+- **Light / Dark** — przełącznik motywu pod ikoną **?** (zapamiętywany). Eksport SVG dopasowuje kolory do motywu.
+- **SHARE / EXPORT (skondensowane)** — jeden dropdown ze wszystkimi akcjami (Copy/Download SVG/JSON, Share link,
+  Copy kod, Import, MCP, Live) + dwa przyciski na wierzchu: **Copy SVG** i **Share link**.
 - **Dodawanie** — **przeciągnij kafelek z palety na canvas** (z podglądem miejsca), albo kliknij = wstaw na środku widoku.
 - **Interakcje** — klik = zaznacz, Shift+klik = multi, drag = przesuń (snap do cel), uchwyt = resize,
   Del = usuń, **Ctrl+Z / Ctrl+Shift+Z** = undo/redo, **Ctrl+C/X/V/D** = kopiuj/wytnij/wklej/duplikuj,
@@ -50,8 +53,9 @@ Model obiektów jest zgodny z **wiretext** (`box / text / line / arrow / compone
 
 Narzędzie jest w 100% statyczne (GitHub Pages), więc stan makiety jedzie w **URL hash**:
 
-- `#d=<base64url(JSON dokumentu)>` — Claude generuje taki link; kliknięcie otwiera edytor z wczytaną makietą.
-- `#j=<uri-encoded JSON>` — wariant nieskompresowany.
+- `#z=<gzip+base64url>` — **krótki link** (kompresja gzip przez wbudowany `CompressionStream`); ~5–6× krótszy
+  niż surowy base64. To domyślny format „Share link" i linków z MCP.
+- `#d=<base64url(JSON)>` / `#j=<uri-encoded JSON>` — starsze formaty, nadal wczytywane (kompatybilność wstecz).
 - **Paste / import…** — wklej `Doc` lub samą tablicę `objects[]` (Claude może dać sam JSON).
 - **Drag & drop** pliku `.json` na canvas.
 

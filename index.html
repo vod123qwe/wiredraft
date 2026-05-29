@@ -26,6 +26,25 @@
     --line-strong: rgba(255,255,255,0.11);
     --fill-soft: rgba(255,255,255,0.035);
   }
+  body.light {
+    --workspace: #eef0f3;
+    --artboard: #ffffff;
+    --sidebar: #ffffff;
+    --pop: #ffffff;
+    --divider: #e4e7eb;
+    --hover: #eceef2;
+    --text: #1c1e22;
+    --text-dim: #5b6168;
+    --text-mute: #9aa0a8;
+    --grid-dot: rgba(0,0,0,0.10);
+    --grid-dot-major: rgba(0,0,0,0.20);
+    --ink: #2a2d33;
+    --line: rgba(0,0,0,0.10);
+    --line-strong: rgba(0,0,0,0.22);
+    --fill-soft: rgba(0,0,0,0.04);
+  }
+  body.light .pill, body.light .tb-tabs, body.light .ptab-add, body.light .mode-sel { box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06); }
+  body.light .sidebar { box-shadow: -1px 0 0 var(--divider); }
   * { box-sizing: border-box; }
   html, body { height: 100%; height: 100dvh; }
   body {
@@ -212,6 +231,9 @@
     width: 100%; transition: background .1s;
   }
   .btn:hover { background: #2aa7ff; }
+  .export-sel { width: 100%; background: var(--workspace); color: var(--text); border: none; border-radius: 6px; padding: 9px 10px; font: inherit; font-size: 11px; cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); outline: none; -webkit-appearance: none; appearance: none; }
+  .export-sel:hover { box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .export-sel option { background: var(--sidebar); color: var(--text); }
   .btn.ghost { background: transparent; box-shadow: inset 0 0 0 1px var(--line); color: var(--text-dim); }
   .btn.ghost:hover { background: var(--fill-soft); box-shadow: inset 0 0 0 1px var(--line-strong); color: var(--text); }
   .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0; }
@@ -300,6 +322,8 @@
   /* shortcuts popover */
   .help-pop { position: fixed; top: 56px; right: 314px; z-index: 70; width: 290px; display: none; background: var(--pop); border-radius: 10px; padding: 13px 15px; box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06); }
   .help-pop.open { display: block; }
+  .help-theme { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--line); font-size: 11px; color: var(--text); }
+  .help-theme .seg button { font-size: 10px; }
   .help-head { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; font-size: 10px; color: var(--text-dim); margin-bottom: 9px; }
   .help-list { display: flex; flex-direction: column; gap: 8px; }
   .help-list > div { display: flex; justify-content: space-between; gap: 14px; font-size: 10px; align-items: baseline; }
@@ -491,32 +515,23 @@
     <div class="section" id="secExport">
       <button class="section-head" data-sec><span class="caret">▾</span> SHARE / EXPORT</button>
       <div class="section-body">
-        <div class="lbl-mini">Kod projektu</div>
-        <div class="code-row">
-          <span id="projCode" class="code-val">WD-XXXX</span>
-          <button class="btn ghost" id="copyCode" title="Kopiuj kod">⧉</button>
-        </div>
-        <button class="btn" id="shareProject" style="margin:6px 0">Udostępnij projekt (link)</button>
-        <button class="btn ghost" id="goLive"><span class="dot"></span><span class="lab">Live session</span></button>
-        <div class="info" id="collabStatus">Sesja na żywo wyłączona. „Live session" = wspólny pokój wg kodu (kursory + sync).</div>
-        <div class="lbl-mini">Claude Code</div>
-        <button class="btn ghost" id="mcpBtn">⚡ Połącz Claude Code (MCP)</button>
-        <div class="info">Pozwól Claude generować makiety i wrzucać je tu jednym linkiem.</div>
-        <div class="lbl-mini">Figma (vektory)</div>
-        <div class="btn-row">
+        <select id="exportSel" class="export-sel">
+          <option value="">⤓ Eksportuj / udostępnij…</option>
+          <option value="copysvg">Copy SVG → Figma</option>
+          <option value="dlsvg">Download SVG</option>
+          <option value="copyjson">Copy JSON</option>
+          <option value="dljson">Download JSON</option>
+          <option value="sharelink">Share link (krótki)</option>
+          <option value="copycode">Copy kod projektu</option>
+          <option value="import">Import…</option>
+          <option value="mcp">⚡ Połącz Claude Code (MCP)</option>
+          <option value="live">● Live session (włącz/wyłącz)</option>
+        </select>
+        <div class="btn-row" style="margin-top:8px">
           <button class="btn" id="copySvg">Copy SVG</button>
-          <button class="btn ghost" id="dlSvg">Download SVG</button>
-        </div>
-        <div class="lbl-mini">Dokument (JSON / link)</div>
-        <div class="btn-row">
-          <button class="btn ghost" id="copyJson">Copy JSON</button>
-          <button class="btn ghost" id="dlJson">Download JSON</button>
-        </div>
-        <div class="btn-row">
           <button class="btn ghost" id="copyLink">Share link</button>
-          <button class="btn ghost" id="importBtn">Import…</button>
         </div>
-        <div class="info">SVG wklejasz w Figmie jako edytowalne warstwy (Ctrl+V). Notatki jadą jako warstwa <b>#annotations</b>.</div>
+        <div class="info" id="collabStatus">SVG wklejasz w Figmie (Ctrl+V); notatki = warstwa <b>#annotations</b>. Linki są skompresowane.</div>
       </div>
     </div>
   </aside>
@@ -551,6 +566,13 @@
   </div>
 </div>
 <div class="help-pop" id="helpPop">
+  <div class="help-theme">
+    <span>Motyw</span>
+    <div class="seg" id="themeSeg" style="grid-template-columns:1fr 1fr;width:130px">
+      <button data-theme="dark" class="on">🌙 Dark</button>
+      <button data-theme="light">☀ Light</button>
+    </div>
+  </div>
   <div class="help-head">Skróty</div>
   <div class="help-list">
     <div><b>Pan</b><span>Spacja / H (przytrzymaj) · środkowy przycisk</span></div>
@@ -1746,8 +1768,10 @@ function exportSVG() {
   const W = cols * cw, H = rows * ch;
   const fs = (ch * 0.82).toFixed(1);
   const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const light = document.body.classList.contains('light');
+  const bg = light ? '#ffffff' : '#242424', ink = light ? '#1f2228' : '#d6d9de';
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="monospace" font-size="${fs}">\n`;
-  svg += `<rect width="${W}" height="${H}" fill="#242424"/>\n`;
+  svg += `<rect width="${W}" height="${H}" fill="${bg}"/>\n`;
   // per layer groups
   doc.layers.forEach(layer => {
     if (!layer.visible) return;
@@ -1765,7 +1789,7 @@ function exportSVG() {
         const start = b[r].findIndex(ch2 => ch2 !== ' ');
         if (start < 0) continue;
         const text = b[r].slice(start).join('').replace(/\s+$/,'');
-        svg += `<text x="${start*cw}" y="${r*ch + ch*0.78}" fill="#d6d9de" xml:space="preserve">${esc(text)}</text>`;
+        svg += `<text x="${start*cw}" y="${r*ch + ch*0.78}" fill="${ink}" xml:space="preserve">${esc(text)}</text>`;
       }
       svg += `</g>\n`;
     });
@@ -1797,21 +1821,27 @@ function download(name, content, type='text/plain') {
 }
 async function copyText(t) { try { await navigator.clipboard.writeText(t); toast('Skopiowano do schowka'); } catch { toast('Kopiowanie nieudane — sprawdź uprawnienia'); } }
 
-function shareLink() {
+/* ---- short links via built-in gzip (#z=), with raw base64 (#d=) fallback ---- */
+function bytesToB64url(bytes) { let bin = ''; for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function b64urlToBytes(s) { s = s.replace(/-/g,'+').replace(/_/g,'/'); while (s.length % 4) s += '='; const bin = atob(s); const a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; }
+async function gzipString(str) { const cs = new CompressionStream('gzip'); const buf = await new Response(new Blob([str]).stream().pipeThrough(cs)).arrayBuffer(); return bytesToB64url(new Uint8Array(buf)); }
+async function gunzipToString(b64) { const ds = new DecompressionStream('gzip'); const buf = await new Response(new Blob([b64urlToBytes(b64)]).stream().pipeThrough(ds)).arrayBuffer(); return new TextDecoder().decode(buf); }
+
+async function shareLink() {
   const json = JSON.stringify(serialize());
+  try { if (typeof CompressionStream !== 'undefined') return location.origin + location.pathname + '#z=' + await gzipString(json); } catch (e) {}
   const b64 = btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   return location.origin + location.pathname + '#d=' + b64;
 }
-function loadFromHash() {
+async function loadFromHash() {
   const h = location.hash.slice(1);
   if (!h) return false;
   try {
-    const m = new URLSearchParams(h.replace(/^#/, ''));
+    if (h.startsWith('z=')) { loadDoc(JSON.parse(await gunzipToString(h.slice(2)))); return true; }
     if (h.startsWith('d=')) {
       let b64 = h.slice(2).replace(/-/g,'+').replace(/_/g,'/');
       while (b64.length % 4) b64 += '=';
-      const json = decodeURIComponent(escape(atob(b64)));
-      loadDoc(JSON.parse(json)); return true;
+      loadDoc(JSON.parse(decodeURIComponent(escape(atob(b64))))); return true;
     }
     if (h.startsWith('j=')) { loadDoc(JSON.parse(decodeURIComponent(h.slice(2)))); return true; }
   } catch (err) { console.warn('hash load failed', err); }
@@ -1873,6 +1903,17 @@ $('#zoomReset').onclick = () => { view.zoom = 1; view.panX = 0; view.panY = 0; a
 $('#addLayer').onclick = () => { pushHistory(); doc.layers.push({ id:uid(), name:'Layer '+(doc.layers.length+1), visible:true }); renderSidebar(); };
 $('#addPage').onclick = addPage;
 $('#modeSel').onchange = (e) => setMode(e.target.value);
+
+/* theme (light / dark) — toggled under the (?) popover, persisted */
+function applyTheme(t) {
+  const light = t === 'light';
+  document.body.classList.toggle('light', light);
+  try { localStorage.setItem('wd-theme', t); } catch (e) {}
+  document.querySelectorAll('#themeSeg button').forEach(b => b.classList.toggle('on', b.dataset.theme === t));
+  if (typeof cellW === 'number') render();
+}
+document.querySelectorAll('#themeSeg button').forEach(b => { b.onclick = () => applyTheme(b.dataset.theme); });
+(function () { let t = 'dark'; try { t = localStorage.getItem('wd-theme') || 'dark'; } catch (e) {} applyTheme(t); })();
 $('#helpBtn').onclick = (e) => { e.stopPropagation(); $('#helpPop').classList.toggle('open'); };
 document.addEventListener('pointerdown', (e) => {
   const hp = $('#helpPop'); if (hp && hp.classList.contains('open') && !hp.contains(e.target) && e.target.id !== 'helpBtn') hp.classList.remove('open');
@@ -1880,23 +1921,26 @@ document.addEventListener('pointerdown', (e) => {
 });
 $('#iconClear').onclick = () => pickIcon('');
 buildIconPicker();
-$('#copyCode').onclick = () => copyText(doc.code);
-$('#shareProject').onclick = () => { copyText(shareLink()); if (!room) goLive(); };
-
-$('#copySvg').onclick = () => copyText(exportSVG());
-$('#dlSvg').onclick = () => download('wiredraft.svg', exportSVG(), 'image/svg+xml');
-$('#copyJson').onclick = () => copyText(exportJSON());
-$('#dlJson').onclick = () => download('wiredraft.json', exportJSON(), 'application/json');
-$('#copyLink').onclick = () => copyText(shareLink());
+async function exportAction(v) {
+  if (v === 'copysvg') copyText(exportSVG());
+  else if (v === 'dlsvg') download('wiredraft.svg', exportSVG(), 'image/svg+xml');
+  else if (v === 'copyjson') copyText(exportJSON());
+  else if (v === 'dljson') download('wiredraft.json', exportJSON(), 'application/json');
+  else if (v === 'sharelink') copyText(await shareLink());
+  else if (v === 'copycode') copyText(doc.code);
+  else if (v === 'import') { $('#importText').value = ''; $('#modalBack').classList.add('open'); $('#importText').focus(); }
+  else if (v === 'mcp') $('#mcpModal').classList.add('open');
+  else if (v === 'live') goLive();
+}
+$('#exportSel').onchange = (e) => { const v = e.target.value; e.target.value = ''; if (v) exportAction(v); };
+$('#copySvg').onclick = () => exportAction('copysvg');
+$('#copyLink').onclick = () => exportAction('sharelink');
 $('#stSnap').onclick = () => { snap = !snap; $('#stSnap').classList.toggle('on', snap); toast('Snap ' + (snap ? 'on' : 'off')); };
-
-$('#importBtn').onclick = () => { $('#importText').value = ''; $('#modalBack').classList.add('open'); $('#importText').focus(); };
 $('#importCancel').onclick = () => $('#modalBack').classList.remove('open');
 $('#importLoad').onclick = () => { try { loadDoc(JSON.parse($('#importText').value)); $('#modalBack').classList.remove('open'); toast('Wczytano'); } catch { toast('Błędny JSON'); } };
 $('#modalBack').onclick = (e) => { if (e.target.id === 'modalBack') $('#modalBack').classList.remove('open'); };
 
 /* MCP connect modal */
-$('#mcpBtn').onclick = () => $('#mcpModal').classList.add('open');
 $('#mcpClose').onclick = () => $('#mcpModal').classList.remove('open');
 $('#mcpModal').onclick = (e) => { if (e.target.id === 'mcpModal') $('#mcpModal').classList.remove('open'); };
 document.querySelectorAll('.cb-copy').forEach(btn => { btn.onclick = () => { const el = $('#' + btn.dataset.copy); if (el) copyText(el.textContent); }; });
@@ -2033,8 +2077,6 @@ function renderPeers() {
   });
 }
 
-$('#goLive').onclick = goLive;
-
 /* ============================================================
    Boot
    ============================================================ */
@@ -2042,15 +2084,16 @@ buildPalette();
 highlightTool();
 bindSections();
 fitGridToViewport();
-const openedShared = loadFromHash();
-if (!openedShared) { doc.objects = []; }
 renderAll();
 // keep the grid filling the screen as the window changes size
 let _rt;
 window.addEventListener('resize', () => { clearTimeout(_rt); _rt = setTimeout(() => { fitGridToViewport(); render(); }, 120); });
 requestAnimationFrame(() => { applyView(); });
-// opened via a shared link → auto-join the live room so cursors "just work"
-if (openedShared) setTimeout(goLive, 500);
+// load a shared doc (if any) then auto-join its live room so cursors "just work"
+(async () => {
+  const openedShared = await loadFromHash();
+  if (openedShared) setTimeout(goLive, 500);
+})();
 </script>
 </body>
 </html>

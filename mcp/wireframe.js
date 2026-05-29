@@ -2,6 +2,8 @@
 // Mirrors the renderers in index.html so ASCII preview matches the editor,
 // and builds editor URLs with the document encoded in the #d= hash.
 
+import { gzipSync } from 'node:zlib';
+
 export const DEFAULT_BASE = 'https://vod123qwe.github.io/wiredraft/';
 
 const BORDERS = {
@@ -271,7 +273,7 @@ export function makeDoc(input = {}) {
 
 export function encodeUrl(doc, baseUrl = DEFAULT_BASE) {
   const json = JSON.stringify(doc);
-  const b64 = Buffer.from(json, 'utf8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  const sep = baseUrl.includes('#') ? '' : '#d=';
+  const b64 = gzipSync(Buffer.from(json, 'utf8')).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const sep = baseUrl.includes('#') ? '' : '#z=';
   return baseUrl + sep + b64;
 }

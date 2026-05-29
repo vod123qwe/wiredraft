@@ -10,8 +10,12 @@ Model obiektów jest zgodny z **wiretext** (`box / text / line / arrow / compone
 
 ## Co potrafi
 
-- **Pełnoekranowy canvas znakowy** — dark, Figma-like; grid w kropki wypełnia cały obszar (edge-to-edge),
-  prawy sidebar 300px (nagłówki: JetBrains Mono, wersaliki) ułożony w te same grupy co wiretext.
+- **Duży, pannable canvas** — workspace ≥ 240×120 cel (~2× viewport), rośnie z zawartością; grid w kropki,
+  dark/Figma-like, sidebar 300px (nagłówki JetBrains Mono, wersaliki).
+- **Bogata biblioteka komponentów (~45)** — grupy TOOLS / INPUT / LAYOUT / DISPLAY / CHROME (per tryb) /
+  CONTENT: m.in. heading, link, badge, chip, kbd, slider, stepper±, pagination, accordion, menu, snackbar,
+  FAB, spinner, stat, chart (bary), video, grouplist (table view), page-control — obok bazowych input/button/
+  card/modal/table/alert/nav/tabs itd. i wariantów iOS.
 - **Pages** — wiele stron w projekcie, każda = osobny canvas/ścieżka (własne obiekty + warstwy). **Zakładki
   na górze canvasu** (jak w Figmie): klik = przełącz, dwuklik = zmień nazwę, × = usuń, `+` = nowa. Kontrolki
   (undo/redo, zoom, **? = skróty**) po prawej stronie górnego paska.

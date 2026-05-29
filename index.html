@@ -456,6 +456,11 @@
       </div>
     </div>
 
+    <div class="section" id="secContent">
+      <button class="section-head" data-sec><span class="caret">▾</span> CONTENT</button>
+      <div class="section-body"><div class="palette" data-group="secContent"></div></div>
+    </div>
+
     <div class="section" id="secProps">
       <button class="section-head" data-sec><span class="caret">▾</span> INSPECTOR</button>
       <div class="section-body" id="propsBody">
@@ -872,6 +877,24 @@ function renderComponent(b, o, c, r, w, h) {
       (o.rows || []).forEach((rowData, ri) => { if (r + 3 + ri < r + h - 1) rowData.forEach((cell, i) => writeText(b, c + 1 + i * cw + 1, r + 3 + ri, String(cell).slice(0, cw - 1))); });
       return;
     }
+    case 'heading': { const t = lab || 'Heading'; writeText(b, c, r, t.slice(0, w)); for (let i = 0; i < Math.min(w, t.length); i++) put(b, c + i, r + 1, '═'); return; }
+    case 'link': { const t = lab || 'link'; writeText(b, c, r, t.slice(0, w)); for (let i = 0; i < Math.min(w, t.length); i++) put(b, c + i, r + 1, '─'); return; }
+    case 'badge': writeText(b, c, r, ('( ' + (lab || '3') + ' )').slice(0, w)); return;
+    case 'chip': writeText(b, c, r, ('[ ' + (lab || 'Tag') + ' ✕ ]').slice(0, w)); return;
+    case 'kbd': { drawBoxFrame(b, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, c, r, w, h, lab || 'Ctrl'); return; }
+    case 'slider': { const mid = r + Math.floor(h / 2); for (let i = 0; i < w; i++) put(b, c + i, mid, i === 0 ? '├' : i === w - 1 ? '┤' : '─'); const p = Math.round((w - 1) * ((o.value ?? 50) / (o.maxValue ?? 100))); put(b, c + Math.max(1, Math.min(w - 2, p)), mid, '●'); return; }
+    case 'numstep': writeText(b, c, r + Math.floor(h / 2), ('[ − ]  ' + (o.value ?? 1) + '  [ + ]').slice(0, w)); return;
+    case 'pagination': { const n = o.maxValue ?? 4, act = o.activeStep ?? 0; const parts = []; for (let i = 0; i < n; i++) parts.push(i === act ? '[' + (i + 1) + ']' : String(i + 1)); writeText(b, c, r + Math.floor(h / 2), ('‹ ' + parts.join(' ') + ' ›').slice(0, w)); return; }
+    case 'accordion': { const open = o.checked !== false; writeText(b, c, r, ((open ? '▾ ' : '▸ ') + (lab || 'Section')).slice(0, w)); for (let i = 0; i < w; i++) put(b, c + i, r + 1, '─'); if (open && o.body) String(o.body).split('\n').forEach((ln, i) => { if (r + 2 + i < r + h) writeText(b, c + 2, r + 2 + i, ln.slice(0, w - 2)); }); return; }
+    case 'menu': { drawBoxFrame(b, c, r, w, h, bs, 'solid'); (o.items || ['Item 1','Item 2','Item 3']).forEach((it, i) => { if (r + 1 + i < r + h - 1) writeText(b, c + 2, r + 1 + i, it.slice(0, w - 4)); }); return; }
+    case 'snackbar': { drawBoxFrame(b, c, r, w, h, bs, 'solid'); const mid = r + Math.floor(h / 2); const act = o.body || 'UNDO'; writeText(b, c + 2, mid, (lab || 'Saved').slice(0, w - 6 - act.length)); writeText(b, c + Math.max(2, w - 2 - act.length), mid, act); return; }
+    case 'fab': { drawBoxFrame(b, c, r, w, h, 'rounded', 'solid'); drawCenteredLabel(b, c, r, w, h, o.icon || '+'); return; }
+    case 'spinner': writeText(b, c, r + Math.floor(h / 2), ('◐ ' + (lab || 'Loading…')).slice(0, w)); return;
+    case 'statcard': { drawBoxFrame(b, c, r, w, h, bs, 'solid'); writeText(b, c + 2, r + 1, (lab || '1,234').slice(0, w - 4)); writeText(b, c + 2, r + 2, (o.body || 'Users').slice(0, w - 4)); return; }
+    case 'chartbar': { drawBoxFrame(b, c, r, w, h, bs, 'solid'); const bars = ['▁','▂','▃','▄','▅','▆','▇','█']; const data = o.items || ['3','6','2','7','5','8','4','6','3','7']; for (let i = 0; i < w - 2; i++) { const lvl = Math.max(0, Math.min(7, parseInt(data[i % data.length]) || 3)); put(b, c + 1 + i, r + h - 2, bars[lvl]); } return; }
+    case 'video': { drawBoxFrame(b, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, c, r, w, h, '▶'); return; }
+    case 'grouplist': { drawBoxFrame(b, c, r, w, h, bs, 'solid'); const items = o.items || ['Settings','Privacy','About']; items.forEach((it, i) => { const rr = r + 1 + i * 2; if (rr < r + h - 1) { writeText(b, c + 2, rr, it.slice(0, w - 6)); put(b, c + w - 3, rr, '›'); if (i < items.length - 1 && rr + 1 < r + h - 1) for (let x = 2; x < w - 2; x++) put(b, c + x, rr + 1, '─'); } }); return; }
+    case 'pagecontrol': { const n = o.maxValue ?? 4, act = o.activeStep ?? 0; let s = ''; for (let i = 0; i < n; i++) s += (i === act ? '● ' : '○ '); const t = s.trim(); writeText(b, c + centerPad(w, t.length), r + Math.floor(h / 2), t); return; }
     default:
       drawBoxFrame(b, c, r, w, h, bs, 'solid');
       drawCenteredLabel(b, c, r, w, h, lab || ct);
@@ -1112,17 +1135,35 @@ const GROUPS = {
     { t:'rating', gly:'✦', nm:'Rating' },
     { t:'skeleton', gly:'▥', nm:'Skeleton' },
   ],
+  secContent: [
+    { t:'heading', gly:'H', nm:'Heading' },
+    { t:'link', gly:'⎘', nm:'Link' },
+    { t:'badge', gly:'❸', nm:'Badge' },
+    { t:'chip', gly:'⬚', nm:'Chip' },
+    { t:'kbd', gly:'⌨', nm:'Key' },
+    { t:'slider', gly:'⊝', nm:'Slider' },
+    { t:'numstep', gly:'∓', nm:'Stepper±' },
+    { t:'pagination', gly:'⋯', nm:'Pages' },
+    { t:'accordion', gly:'▾', nm:'Accordion' },
+    { t:'menu', gly:'☰', nm:'Menu' },
+    { t:'snackbar', gly:'▭', nm:'Snackbar' },
+    { t:'fab', gly:'⊕', nm:'FAB' },
+    { t:'spinner', gly:'◐', nm:'Spinner' },
+    { t:'statcard', gly:'▦', nm:'Stat' },
+    { t:'chartbar', gly:'▇', nm:'Chart' },
+    { t:'video', gly:'▶', nm:'Video' },
+  ],
 };
 // flat glyph lookup for the object list
 const GLY = {};
 Object.values(GROUPS).flat().forEach(i => { if (i.t !== 'pointer') GLY[i.t] = i.gly; });
-Object.assign(GLY, { statusbar:'▭', iosnav:'‹', tabbar:'⊞', segmented:'▢', iosswitch:'◉', searchbar:'⌕', homeindicator:'▬' });
+Object.assign(GLY, { statusbar:'▭', iosnav:'‹', tabbar:'⊞', segmented:'▢', iosswitch:'◉', searchbar:'⌕', homeindicator:'▬', grouplist:'☰', pagecontrol:'●' });
 
 /* platform chrome group — contents depend on the active page's design mode */
 const CHROME = {
   desktop: [{ t:'__frame', gly:'▭', nm:'Frame' }, { t:'browser', gly:'⊡', nm:'Browser' }, { t:'navbar', gly:'≡', nm:'Top nav' }, { t:'searchbar', gly:'⌕', nm:'Search' }],
-  mobile:  [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'iosnav', gly:'‹', nm:'Nav bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
-  ios:     [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'iosnav', gly:'‹', nm:'Nav bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'iosswitch', gly:'◉', nm:'Switch' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
+  mobile:  [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'iosnav', gly:'‹', nm:'Nav bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
+  ios:     [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'iosnav', gly:'‹', nm:'Nav bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'iosswitch', gly:'◉', nm:'Switch' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
 };
 function renderChromeGroup() {
   const m = currentMode();
@@ -1187,8 +1228,9 @@ function centerColRow(w, h) {
 function fitGridToViewport() {
   const area = $('#canvasArea');
   const vw = area.clientWidth || window.innerWidth, vh = area.clientHeight || window.innerHeight;
-  const needCols = Math.ceil(vw / (doc.grid.cellW * view.zoom)) + 2;
-  const needRows = Math.ceil(vh / (doc.grid.cellH * view.zoom)) + 2;
+  // generous, pannable workspace: at least ~2× the viewport (room for many screens)
+  const needCols = Math.max(240, Math.ceil(vw / (doc.grid.cellW * view.zoom)) * 2);
+  const needRows = Math.max(120, Math.ceil(vh / (doc.grid.cellH * view.zoom)) * 2);
   doc.grid.cols = Math.max(doc.grid.cols, needCols);
   doc.grid.rows = Math.max(doc.grid.rows, needRows);
 }
@@ -1253,6 +1295,24 @@ function compDefaults(t) {
     case 'iosswitch': return { w:16, h:1, extra:{ label:'Wi-Fi', checked:true } };
     case 'searchbar': return { w:30, h:3, extra:{ label:'Search' } };
     case 'homeindicator': return { w:42, h:1, extra:{} };
+    case 'heading': return { w:24, h:2, extra:{ label:'Heading' } };
+    case 'link': return { w:12, h:2, extra:{ label:'Link text' } };
+    case 'badge': return { w:8, h:1, extra:{ label:'3' } };
+    case 'chip': return { w:12, h:1, extra:{ label:'Tag' } };
+    case 'kbd': return { w:9, h:3, extra:{ label:'Ctrl' } };
+    case 'slider': return { w:28, h:1, extra:{ value:50, maxValue:100 } };
+    case 'numstep': return { w:18, h:1, extra:{ value:1 } };
+    case 'pagination': return { w:24, h:1, extra:{ maxValue:4, activeStep:0 } };
+    case 'accordion': return { w:30, h:5, extra:{ label:'Section', body:'Hidden content…', checked:true } };
+    case 'menu': return { w:22, h:6, extra:{ items:['Edit','Duplicate','Delete'] } };
+    case 'snackbar': return { w:40, h:3, extra:{ label:'Saved to library', body:'UNDO' } };
+    case 'fab': return { w:6, h:3, extra:{ icon:'+' } };
+    case 'spinner': return { w:16, h:1, extra:{ label:'Loading…' } };
+    case 'statcard': return { w:20, h:5, extra:{ label:'1,234', body:'Active users' } };
+    case 'chartbar': return { w:30, h:8, extra:{ items:['3','6','2','7','5','8','4','6','3','7','5','2'] } };
+    case 'video': return { w:32, h:10, extra:{} };
+    case 'grouplist': return { w:34, h:8, extra:{ items:['Settings','Privacy','About'] } };
+    case 'pagecontrol': return { w:16, h:1, extra:{ maxValue:4, activeStep:0 } };
     default: return { w:20, h:5, extra:{ label:t } };
   }
 }
@@ -1268,10 +1328,14 @@ function setMode(m) { const p = doc.pages.find(x => x.id === doc.activePage); if
 function mkComp(ct, col, row, w, h, extra, gid) { return { id: uid(), type: 'component', componentType: ct, layerId: doc.layers[0].id, position: { col, row }, width: w, height: h, groupId: gid, ...extra }; }
 function insertFrame() {
   const M = MODES[currentMode()]; const gid = 'grp' + uid();
-  const pos = centerColRow(M.w, M.h);
+  // flow: place new frame to the right of existing frames (screens line up)
+  const frames = doc.objects.filter(o => o.frame);
+  let pos;
+  if (frames.length) { const right = Math.max(...frames.map(f => f.position.col + f.width)); const top = Math.min(...frames.map(f => f.position.row)); pos = { col: right + 4, row: top }; }
+  else pos = { col: 3, row: 2 };
   pushHistory();
   const fid = uid();
-  const objs = [{ id: fid, type: 'box', layerId: doc.layers[0].id, position: { ...pos }, width: M.w, height: M.h, borderStyle: M.border, fill: 'transparent', name: M.label, groupId: gid }];
+  const objs = [{ id: fid, type: 'box', layerId: doc.layers[0].id, position: { ...pos }, width: M.w, height: M.h, borderStyle: M.border, fill: 'transparent', name: M.label, groupId: gid, frame: true }];
   M.chrome.forEach(ch => {
     if (ch === 'browserTop') objs.push(mkComp('browser', pos.col + 1, pos.row + 1, M.w - 2, 5, { label: 'example.com' }, gid));
     if (ch === 'statusbar') objs.push(mkComp('statusbar', pos.col + 1, pos.row + 1, M.w - 2, 1, { label: '9:41', body: '▮▮▮ 100%' }, gid));
@@ -1282,7 +1346,7 @@ function insertFrame() {
   });
   objs.forEach(o => doc.objects.push(o));
   sel = new Set(objs.map(o => o.id));
-  fitGridToViewport(); renderAll();
+  fitGridToContent(); fitGridToViewport(); renderAll();
 }
 
 /* sections collapse */
@@ -1398,20 +1462,23 @@ function renderProps() {
   if (o.type === 'component') {
     const ct = o.componentType;
     const BORDERED = ['button','input','select','navbar','tabs','card','modal','alert','table','browser','progress','image','avatar','iosnav','tabbar','segmented','searchbar'];
-    const ICONABLE = ['icon','image','button','input','select'];
+    const ICONABLE = ['icon','image','button','input','select','fab'];
     if ('label' in (o)) { const ll = (ct === 'input' || ct === 'select') ? 'Tekst' : ct === 'statusbar' ? 'Czas' : ct === 'iosnav' ? 'Tytuł' : 'Label'; html += '<div class="lbl-mini">' + ll + '</div>' + fld('label','T',o.label); }
-    if (['checkbox','radio','toggle','iosswitch'].includes(ct)) html += '<div class="lbl-mini">State</div><div class="seg" data-seg="checked" style="grid-template-columns:1fr 1fr"><button data-val="true" class="' + (o.checked !== false ? 'on' : '') + '">On</button><button data-val="false" class="' + (o.checked === false ? 'on' : '') + '">Off</button></div>';
+    if (['checkbox','radio','toggle','iosswitch','accordion'].includes(ct)) html += '<div class="lbl-mini">State</div><div class="seg" data-seg="checked" style="grid-template-columns:1fr 1fr"><button data-val="true" class="' + (o.checked !== false ? 'on' : '') + '">On</button><button data-val="false" class="' + (o.checked === false ? 'on' : '') + '">Off</button></div>';
     if (ct === 'navbar') html += '<div class="lbl-mini">Items (comma)</div>' + fld('navItems','≡',(o.navItems||[]).join(', '));
     if (ct === 'tabs') html += '<div class="lbl-mini">Tabs (comma)</div>' + fld('tabs','⊟',(o.tabs||[]).join(', '));
-    if (['list','breadcrumb','stepper','tabbar','segmented'].includes(ct)) html += '<div class="lbl-mini">Items (comma)</div>' + fld('items','☰',(o.items||[]).join(', '));
+    if (['list','breadcrumb','stepper','tabbar','segmented','menu','grouplist','chartbar'].includes(ct)) html += '<div class="lbl-mini">Items (comma)</div>' + fld('items','☰',(o.items||[]).join(', '));
     if (ct === 'iosnav') html += '<div class="lbl-mini">Back / Right (comma)</div>' + fld('items','‹',(o.items||[]).join(', '));
     if (ct === 'list') html += '<div class="lbl-mini">List style</div><div class="seg" data-seg="listStyle" style="grid-template-columns:repeat(3,1fr)">' + ['bullet','number','dash'].map(s => `<button data-val="${s}" class="${(o.listStyle||'bullet')===s?'on':''}">${s}</button>`).join('') + '</div>';
     if (['stepper','segmented'].includes(ct)) html += '<div class="lbl-mini">Active index</div>' + fld('activeStep','#',o.activeStep ?? 0,'number','min=0');
     if (ct === 'progress') html += '<div class="lbl-mini">Progress %</div>' + fld('progress','%',o.progress,'number','min=0 max=100');
     if (ct === 'rating') html += '<div class="lbl-mini">Rating</div><div class="row pair">' + fld('value','★',o.value ?? 0,'number') + fld('maxValue','/',o.maxValue ?? 5,'number') + '</div>';
     if (ct === 'alert') html += '<div class="lbl-mini">Type</div><div class="seg" data-seg="alertType">' + ['info','warning','error','success'].map(s=>`<button data-val="${s}" class="${(o.alertType||'info')===s?'on':''}">${s[0].toUpperCase()}</button>`).join('')+'</div>';
-    if (['card','modal','alert'].includes(ct)) html += '<div class="lbl-mini">Body</div><label class="field"><textarea class="note-input" data-prop="body">'+(o.body||'')+'</textarea></label>';
+    if (['card','modal','alert','accordion','statcard'].includes(ct)) html += '<div class="lbl-mini">Body</div><label class="field"><textarea class="note-input" data-prop="body">'+(o.body||'')+'</textarea></label>';
     if (ct === 'statusbar') html += '<div class="lbl-mini">Prawa strona</div>' + fld('body','▮',o.body||'');
+    if (ct === 'snackbar') html += '<div class="lbl-mini">Akcja</div>' + fld('body','↩',o.body||'');
+    if (['slider','numstep'].includes(ct)) html += '<div class="lbl-mini">Wartość' + (ct === 'slider' ? ' / max' : '') + '</div>' + (ct === 'slider' ? ('<div class="row pair">' + fld('value','#',o.value ?? 50,'number') + fld('maxValue','/',o.maxValue ?? 100,'number') + '</div>') : fld('value','#',o.value ?? 1,'number'));
+    if (['pagination','pagecontrol'].includes(ct)) html += '<div class="lbl-mini">Liczba / aktywna</div><div class="row pair">' + fld('maxValue','n',o.maxValue ?? 4,'number') + fld('activeStep','#',o.activeStep ?? 0,'number') + '</div>';
     if (BORDERED.includes(ct)) html += borderSegHtml(o.borderStyle || (ct === 'modal' ? 'double' : ct === 'avatar' ? 'rounded' : 'single'));
     if (ICONABLE.includes(ct)) html += '<div class="lbl-mini">Icon</div><button type="button" class="field icon-field" data-iconpick><span class="k">◇</span><span class="icon-cur">' + (o.icon || '∅ brak') + '</span><span class="icon-caret">▾</span></button>';
   }

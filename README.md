@@ -45,6 +45,38 @@ Narzędzie jest w 100% statyczne (GitHub Pages), więc stan makiety jedzie w **U
 
 Pętla pracy: Claude komponuje `objects[]` → daje Ci link/JSON → wczytujesz i dopieszczasz wizualnie → eksport.
 
+## Claude Code (MCP)
+
+W repo jest serwer **MCP** (`mcp/server.js`), który pozwala Claude Code generować makiety i wrzucać je do
+WireDraft jednym linkiem. Narzędzia:
+
+- **`create_wireframe`** — z `objects[]` (lub `pages[]`) buduje makietę i zwraca **edytowalny URL**
+  (`https://vod123qwe.github.io/wiredraft/#d=…`) + podgląd ASCII.
+- **`render_wireframe`** — sam podgląd ASCII (do sprawdzenia układu).
+
+Podłączenie (terminal, w katalogu projektu):
+
+```bash
+claude mcp add wiredraft -- npx -y github:vod123qwe/wiredraft
+```
+
+…albo ręcznie w `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "wiredraft": {
+      "command": "npx",
+      "args": ["-y", "github:vod123qwe/wiredraft"]
+    }
+  }
+}
+```
+
+Potem: w Claude Code poproś np. *„zrób makietę ekranu logowania"* → dostaniesz link, otwierasz go w WireDraft,
+dopieszczasz i eksportujesz do Figmy. (Instrukcja jest też w aplikacji: **SHARE → ⚡ Połącz Claude Code (MCP)**.)
+Inny edytor/host można wskazać zmienną `WIREDRAFT_URL`.
+
 ## Eksport do Figmy
 
 1. **Copy SVG** → w Figmie <kbd>Ctrl/Cmd</kbd>+<kbd>V</kbd>. Wkleja się jako edytowalne warstwy
@@ -58,7 +90,7 @@ Pętla pracy: Claude komponuje `objects[]` → daje Ci link/JSON → wczytujesz 
 Bez kroku budowania. Otwórz `index.html` wprost, albo:
 
 ```bash
-node serve.js   # http://localhost:8791
+node serve.js   # http://localhost:8794
 ```
 
 ## Hosting (GitHub Pages)
@@ -70,7 +102,6 @@ Działa jak `grid-blob` na `*.github.io`.
 
 - **Trwała współpraca / kod-only** — backend (np. GitHub Gist) by wczytywać projekt po samym krótkim kodzie
   i persystować sesję między spotkaniami (live P2P jest efemeryczne — działa tylko gdy obie strony są online).
-- Dedykowany **npm/npx MCP**, który sam emituje linki `#d=…` do hostowanego edytora („każdy podpina MCP").
-- Kompresja `#z=` (lz-string) dla krótszych linków.
+- Kompresja `#z=` (lz-string) dla krótszych linków (przy dużych makietach).
 - Przycisk **natywnego eksportu do Figmy** wprost z edytora (na razie po stronie Claude przez Figma MCP).
 - Tryb „klik narzędzie → kliknij na canvasie by postawić" (teraz obiekt ląduje na środku widoku).

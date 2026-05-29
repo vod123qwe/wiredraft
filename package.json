@@ -1,0 +1,19 @@
+{
+  "name": "wiredraft",
+  "version": "0.3.0",
+  "description": "WireDraft — single-file lo-fi wireframe editor (wiretext-compatible) + MCP server for Claude Code",
+  "type": "module",
+  "bin": {
+    "wiredraft-mcp": "mcp/server.js"
+  },
+  "files": [
+    "mcp/"
+  ],
+  "scripts": {
+    "mcp": "node mcp/server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "license": "MIT"
+}

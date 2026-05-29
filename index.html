@@ -328,6 +328,16 @@
   }
   .modal .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
   .modal .btn { width: auto; padding: 8px 16px; }
+  .mcp-modal { width: 560px; }
+  .mcp-step { color: var(--text); font-size: 12px; line-height: 1.5; margin: 12px 0 6px; }
+  .mcp-step:first-of-type { margin-top: 4px; }
+  .mcp-step code, .mcp-note code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: var(--accent); background: var(--workspace); padding: 1px 5px; border-radius: 4px; }
+  .mcp-note { color: var(--text-mute); font-size: 11px; line-height: 1.5; margin: 12px 0 0; }
+  .mcp-note b { color: var(--text-dim); }
+  .codeblock { position: relative; background: var(--workspace); border-radius: 6px; box-shadow: inset 0 0 0 1px var(--line); padding: 10px 40px 10px 12px; }
+  .codeblock code, .codeblock pre { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; line-height: 1.55; color: var(--ink); white-space: pre-wrap; word-break: break-all; margin: 0; display: block; }
+  .cb-copy { position: absolute; top: 7px; right: 7px; width: 26px; height: 26px; border: none; border-radius: 5px; background: transparent; color: var(--text-mute); cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); }
+  .cb-copy:hover { color: var(--text); background: var(--fill-soft); box-shadow: inset 0 0 0 1px var(--line-strong); }
 
   .drop-hint {
     position: fixed; inset: 0; z-index: 150; display: none;
@@ -459,6 +469,9 @@
         <button class="btn" id="shareProject" style="margin:6px 0">Udostępnij projekt (link)</button>
         <button class="btn ghost" id="goLive"><span class="dot"></span><span class="lab">Live session</span></button>
         <div class="info" id="collabStatus">Sesja na żywo wyłączona. „Live session" = wspólny pokój wg kodu (kursory + sync).</div>
+        <div class="lbl-mini">Claude Code</div>
+        <button class="btn ghost" id="mcpBtn">⚡ Połącz Claude Code (MCP)</button>
+        <div class="info">Pozwól Claude generować makiety i wrzucać je tu jednym linkiem.</div>
         <div class="lbl-mini">Figma (vektory)</div>
         <div class="btn-row">
           <button class="btn" id="copySvg">Copy SVG</button>
@@ -525,6 +538,27 @@
       <button class="btn ghost" id="importCancel">Anuluj</button>
       <button class="btn" id="importLoad">Wczytaj</button>
     </div>
+  </div>
+</div>
+
+<!-- MCP connect modal -->
+<div class="modal-back" id="mcpModal">
+  <div class="modal mcp-modal">
+    <h3>⚡ Połącz Claude Code (MCP)</h3>
+    <p class="mcp-step"><b>1.</b> W terminalu (w katalogu projektu) dodaj serwer MCP:</p>
+    <div class="codeblock"><code id="mcpCmd">claude mcp add wiredraft -- npx -y github:vod123qwe/wiredraft</code><button class="cb-copy" data-copy="mcpCmd" title="Kopiuj">⧉</button></div>
+    <p class="mcp-step">…albo ręcznie w <code>.mcp.json</code>:</p>
+    <div class="codeblock"><pre id="mcpJson">{
+  "mcpServers": {
+    "wiredraft": {
+      "command": "npx",
+      "args": ["-y", "github:vod123qwe/wiredraft"]
+    }
+  }
+}</pre><button class="cb-copy" data-copy="mcpJson" title="Kopiuj">⧉</button></div>
+    <p class="mcp-step"><b>2.</b> W Claude Code poproś np. <i>„zrób makietę ekranu logowania"</i>. Dostaniesz link do WireDraft (<code>…/#d=…</code>) — otwórz go tutaj, dopieść makietę i wyeksportuj do Figmy.</p>
+    <p class="mcp-note">Serwer udostępnia narzędzia <b>create_wireframe</b> (→ link do edytora + podgląd ASCII) oraz <b>render_wireframe</b>. Model obiektów jest zgodny z wiretext.</p>
+    <div class="actions"><button class="btn" id="mcpClose">OK</button></div>
   </div>
 </div>
 
@@ -1560,6 +1594,12 @@ $('#importBtn').onclick = () => { $('#importText').value = ''; $('#modalBack').c
 $('#importCancel').onclick = () => $('#modalBack').classList.remove('open');
 $('#importLoad').onclick = () => { try { loadDoc(JSON.parse($('#importText').value)); $('#modalBack').classList.remove('open'); toast('Wczytano'); } catch { toast('Błędny JSON'); } };
 $('#modalBack').onclick = (e) => { if (e.target.id === 'modalBack') $('#modalBack').classList.remove('open'); };
+
+/* MCP connect modal */
+$('#mcpBtn').onclick = () => $('#mcpModal').classList.add('open');
+$('#mcpClose').onclick = () => $('#mcpModal').classList.remove('open');
+$('#mcpModal').onclick = (e) => { if (e.target.id === 'mcpModal') $('#mcpModal').classList.remove('open'); };
+document.querySelectorAll('.cb-copy').forEach(btn => { btn.onclick = () => { const el = $('#' + btn.dataset.copy); if (el) copyText(el.textContent); }; });
 
 /* ---- drag & drop: palette tiles onto the canvas ---- */
 let dragTool = null;

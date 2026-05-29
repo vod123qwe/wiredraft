@@ -15,6 +15,11 @@ Model obiektów jest zgodny z **wiretext** (`box / text / line / arrow / compone
 - **Pages** — wiele stron w projekcie, każda = osobny canvas/ścieżka (własne obiekty + warstwy). **Zakładki
   na górze canvasu** (jak w Figmie): klik = przełącz, dwuklik = zmień nazwę, × = usuń, `+` = nowa. Kontrolki
   (undo/redo, zoom, **? = skróty**) po prawej stronie górnego paska.
+- **Tryby projektowania** (selektor u góry, per strona): **Web Desktop / Web Mobile / iOS App**. Sekcja
+  **CHROME** w sidebarze zmienia zawartość wg trybu, a **Frame** wstawia ramkę urządzenia z chrome (status bar,
+  nav bar, tab bar, home indicator) jako jedną grupę. Warianty iOS w ASCII: `statusbar`, `iosnav` (‹ Back),
+  `tabbar`, `segmented` (« »), `iosswitch` ((  ●)), `searchbar` (⌕), `homeindicator` (▬▬▬). Tryb zapisuje się
+  w projekcie (share link / JSON).
 - **Współdzielenie** — każdy projekt ma **unikalny kod** (`WD-XXXXXXXX`, w sekcji SHARE). „Udostępnij projekt"
   kopiuje link `#d=…` z całym projektem (wszystkie strony) — działa dla każdego, bez serwera.
 - **Live session (P2P)** — „Live session" łączy wszystkich z tym samym kodem w jeden pokój przez **WebRTC

@@ -127,6 +127,28 @@ function renderComponent(b, grid, o, c, r, w, h) {
     }
     case 'rating': { const val = Math.round(o.value ?? 0), mx = o.maxValue ?? 5; writeText(b, grid, c, r, ('●'.repeat(Math.min(val, mx)) + '○'.repeat(Math.max(0, mx - val))).slice(0, w)); return; }
     case 'skeleton': { for (let rr = r; rr < r + h; rr++) for (let i = 0; i < w; i++) put(b, grid, c + i, rr, '░'); return; }
+    case 'statusbar': { const time = lab || '9:41'; const right = o.body || '▮▮▮ 100%'; writeText(b, grid, c + 1, r, time.slice(0, w - 2)); writeText(b, grid, c + Math.max(1, w - 1 - right.length), r, right); return; }
+    case 'iosnav': {
+      drawBoxFrame(b, grid, c, r, w, h, bs, 'solid');
+      const items = o.items || ['Back', '']; const back = items[0] ? '‹ ' + items[0] : '‹'; const right = items[1] || ''; const mid = r + Math.floor(h / 2);
+      writeText(b, grid, c + 2, mid, back.slice(0, w - 4)); if (right) writeText(b, grid, c + Math.max(2, w - 2 - right.length), mid, right);
+      drawCenteredLabel(b, grid, c, r, w, h, lab || 'Title'); return;
+    }
+    case 'tabbar': {
+      drawBoxFrame(b, grid, c, r, w, h, bs, 'solid');
+      const tabs = o.items || ['Home', 'Search', 'Profile']; const inner = w - 2, seg = Math.max(1, Math.floor(inner / tabs.length));
+      tabs.forEach((t, i) => { const txt = t.slice(0, seg - 1); const pad = Math.max(0, Math.floor((seg - txt.length) / 2)); writeText(b, grid, c + 1 + i * seg + pad, r + Math.floor(h / 2), txt); });
+      return;
+    }
+    case 'segmented': {
+      drawBoxFrame(b, grid, c, r, w, h, bs, 'solid');
+      const segs = o.items || ['One', 'Two', 'Three']; const active = o.activeStep ?? 0;
+      const parts = segs.map((s, i) => i === active ? '«' + s + '»' : ' ' + s + ' ');
+      writeText(b, grid, c + 2, r + Math.floor(h / 2), parts.join('│').slice(0, w - 4)); return;
+    }
+    case 'iosswitch': writeText(b, grid, c, r + Math.floor(h / 2), (o.checked !== false ? '(  ●) ' : '(●  ) ') + lab); return;
+    case 'searchbar': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); writeText(b, grid, c + 2, r + Math.floor(h / 2), ('⌕ ' + (lab || 'Search')).slice(0, w - 4)); return; }
+    case 'homeindicator': { const n = Math.min(w - 2, Math.max(6, Math.floor(w / 3))); const bar = '▬'.repeat(n); const pad = centerPad(w, bar.length); writeText(b, grid, c + pad, r + Math.floor(h / 2), bar); return; }
     default: drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, grid, c, r, w, h, lab || ct);
   }
 }

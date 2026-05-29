@@ -82,7 +82,11 @@
   .canvas-area.panning, .canvas-area.panning .wobj { cursor: grabbing !important; }
   .artboard {
     position: relative;
-    background: transparent;
+    background-color: transparent;
+    background-image:
+      radial-gradient(var(--grid-dot-major) 1.1px, transparent 1.6px),
+      radial-gradient(var(--grid-dot) 0.8px, transparent 1.1px);
+    background-repeat: repeat, repeat;
   }
   .artboard-label { display: none; }
   /* grid backdrop */
@@ -427,7 +431,6 @@
     <div class="artboard-wrap" id="artboardWrap">
       <div class="artboard" id="artboard">
         <div class="artboard-label" id="artboardLabel">80 × 30</div>
-        <canvas class="grid-bg" id="gridBg"></canvas>
         <pre id="ascii"></pre>
         <div id="overlay"></div>
         <div class="drop-ghost" id="dropGhost"></div>
@@ -457,30 +460,25 @@
       <div class="section-body"><div class="palette" data-group="secTools"></div></div>
     </div>
 
-    <div class="section" id="secInput">
-      <button class="section-head" data-sec><span class="caret">▾</span> INPUT</button>
-      <div class="section-body"><div class="palette" data-group="secInput"></div></div>
-    </div>
-
-    <div class="section" id="secLayout">
-      <button class="section-head" data-sec><span class="caret">▾</span> LAYOUT</button>
-      <div class="section-body"><div class="palette" data-group="secLayout"></div></div>
-    </div>
-
-    <div class="section" id="secDisplay">
-      <button class="section-head" data-sec><span class="caret">▾</span> DISPLAY</button>
-      <div class="section-body"><div class="palette" data-group="secDisplay"></div></div>
-    </div>
-
     <div class="section" id="secChrome">
-      <button class="section-head" data-sec><span class="caret">▾</span> <span class="chrome-title">WEB</span></button>
+      <button class="section-head" data-sec><span class="caret">▾</span> <span class="chrome-title">MOBILE</span></button>
       <div class="section-body">
         <div class="palette" id="chromePalette"></div>
-        <div class="info">Tryb wybierasz u góry (Desktop / Mobile / iOS). <b>Frame</b> wstawia ramkę urządzenia z chrome.</div>
+        <div class="info"><b>Frame</b> = ramka urządzenia z chrome. Tryb zmienisz selektorem u góry.</div>
       </div>
     </div>
 
-    <div class="section" id="secContent">
+    <div class="section" id="secInput">
+      <button class="section-head" data-sec><span class="caret">▾</span> FORMS</button>
+      <div class="section-body"><div class="palette" data-group="secInput"></div></div>
+    </div>
+
+    <div class="section collapsed" id="secLayout">
+      <button class="section-head" data-sec><span class="caret">▾</span> COMPONENTS</button>
+      <div class="section-body"><div class="palette" data-group="secLayout"></div></div>
+    </div>
+
+    <div class="section collapsed" id="secContent">
       <button class="section-head" data-sec><span class="caret">▾</span> CONTENT</button>
       <div class="section-body"><div class="palette" data-group="secContent"></div></div>
     </div>
@@ -543,9 +541,9 @@
     <div class="tb-tabs" id="pageTabs"></div>
     <button class="ptab-add" id="addPage" title="Nowa strona">+</button>
     <select id="modeSel" class="mode-sel" title="Tryb projektowania">
-      <option value="desktop">▢ Web Desktop</option>
-      <option value="mobile">▯ Web Mobile</option>
+      <option value="mobile">▯ Mobile App</option>
       <option value="ios"> iOS App</option>
+      <option value="desktop">▢ Web Desktop</option>
     </select>
   </div>
   <div class="tb-right">
@@ -561,6 +559,7 @@
       <span class="zoomval" id="zoomVal">100%</span>
       <button id="zoomIn">+</button>
       <button id="zoomReset" title="Reset (Ctrl+0)">⊙</button>
+      <button id="zoomFit" title="Dopasuj do zawartości (Shift+1)">⊡</button>
     </div>
     <button class="pill pill-icon" id="helpBtn" title="Skróty klawiszowe">?</button>
   </div>
@@ -671,7 +670,7 @@ const IC = {
 
 /* ---------- document ---------- */
 function genCode() { return 'WD-' + Math.random().toString(36).slice(2, 6).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase(); }
-function newPage(name) { return { id: 'pg' + uid(), name: name || 'Flow 1', layers: [{ id: 'default', name: 'Layer 1', visible: true }], objects: [] }; }
+function newPage(name, mode) { return { id: 'pg' + uid(), name: name || 'Flow 1', mode: mode || 'mobile', layers: [{ id: 'default', name: 'Layer 1', visible: true }], objects: [] }; }
 function defaultDoc() {
   const pg = newPage('Flow 1');
   const d = { version: 2, code: genCode(), grid: { cols: 80, rows: 30, cellW: 10, cellH: 20 }, pages: [pg], activePage: pg.id };
@@ -1023,21 +1022,9 @@ function render() {
   art.style.width = W + 'px'; art.style.height = H + 'px';
   $('#artboardLabel').textContent = doc.grid.cols + ' × ' + doc.grid.rows;
 
-  // grid backdrop — subtle dot grid (modern whiteboard look), major dots every 5 cells
-  const cv = $('#gridBg'); cv.width = W; cv.height = H;
-  const g = cv.getContext('2d'); g.clearRect(0, 0, W, H);
-  const cs = getComputedStyle(document.documentElement);
-  const dotMinor = cs.getPropertyValue('--grid-dot').trim() || 'rgba(255,255,255,0.06)';
-  const dotMajor = cs.getPropertyValue('--grid-dot-major').trim() || 'rgba(255,255,255,0.13)';
-  g.fillStyle = dotMinor;
-  for (let r = 0; r <= doc.grid.rows; r++) for (let c = 0; c <= doc.grid.cols; c++) {
-    if (c % 5 === 0 && r % 5 === 0) continue;
-    g.fillRect(c * cellW - 0.5, r * cellH - 0.5, 1, 1);
-  }
-  g.fillStyle = dotMajor;
-  for (let r = 0; r <= doc.grid.rows; r += 5) for (let c = 0; c <= doc.grid.cols; c += 5) {
-    g.fillRect(c * cellW - 1, r * cellH - 1, 2, 2);
-  }
+  // grid backdrop — cheap CSS dot pattern (scales to any canvas size); major dots every 5 cells
+  art.style.backgroundSize = (cellW * 5) + 'px ' + (cellH * 5) + 'px, ' + cellW + 'px ' + cellH + 'px';
+  art.style.backgroundPosition = '-0.5px -0.5px, -0.5px -0.5px';
 
   // ascii
   const pre = $('#ascii');
@@ -1135,26 +1122,26 @@ const GROUPS = {
     { t:'checkbox', gly:'☑', nm:'Check' },
     { t:'radio', gly:'◉', nm:'Radio' },
     { t:'toggle', gly:'◖', nm:'Toggle' },
+    { t:'slider', gly:'⊝', nm:'Slider' },
+    { t:'numstep', gly:'∓', nm:'Stepper±' },
   ],
   secLayout: [
-    { t:'table', gly:'▦', nm:'Table' },
-    { t:'modal', gly:'❐', nm:'Modal' },
-    { t:'browser', gly:'⊡', nm:'Browser' },
     { t:'card', gly:'▤', nm:'Card' },
-  ],
-  secDisplay: [
+    { t:'modal', gly:'❐', nm:'Modal' },
+    { t:'table', gly:'▦', nm:'Table' },
+    { t:'browser', gly:'⊡', nm:'Browser' },
     { t:'navbar', gly:'≡', nm:'Navbar' },
     { t:'tabs', gly:'⊟', nm:'Tabs' },
-    { t:'progress', gly:'▰', nm:'Progress' },
-    { t:'icon', gly:'★', nm:'Icon' },
-    { t:'image', gly:'⊠', nm:'Image' },
-    { t:'divider', gly:'—', nm:'Divider' },
-    { t:'alert', gly:'⚠', nm:'Alert' },
     { t:'breadcrumb', gly:'›', nm:'Crumb' },
-    { t:'avatar', gly:'☻', nm:'Avatar' },
+    { t:'alert', gly:'⚠', nm:'Alert' },
     { t:'list', gly:'☰', nm:'List' },
+    { t:'avatar', gly:'☻', nm:'Avatar' },
+    { t:'image', gly:'⊠', nm:'Image' },
+    { t:'icon', gly:'★', nm:'Icon' },
+    { t:'progress', gly:'▰', nm:'Progress' },
     { t:'stepper', gly:'◍', nm:'Stepper' },
     { t:'rating', gly:'✦', nm:'Rating' },
+    { t:'divider', gly:'—', nm:'Divider' },
     { t:'skeleton', gly:'▥', nm:'Skeleton' },
   ],
   secContent: [
@@ -1163,8 +1150,6 @@ const GROUPS = {
     { t:'badge', gly:'❸', nm:'Badge' },
     { t:'chip', gly:'⬚', nm:'Chip' },
     { t:'kbd', gly:'⌨', nm:'Key' },
-    { t:'slider', gly:'⊝', nm:'Slider' },
-    { t:'numstep', gly:'∓', nm:'Stepper±' },
     { t:'pagination', gly:'⋯', nm:'Pages' },
     { t:'accordion', gly:'▾', nm:'Accordion' },
     { t:'menu', gly:'☰', nm:'Menu' },
@@ -1250,9 +1235,9 @@ function centerColRow(w, h) {
 function fitGridToViewport() {
   const area = $('#canvasArea');
   const vw = area.clientWidth || window.innerWidth, vh = area.clientHeight || window.innerHeight;
-  // generous, pannable workspace: at least ~2× the viewport (room for many screens)
-  const needCols = Math.max(240, Math.ceil(vw / (doc.grid.cellW * view.zoom)) * 2);
-  const needRows = Math.max(120, Math.ceil(vh / (doc.grid.cellH * view.zoom)) * 2);
+  // huge, pannable workspace (CSS dot grid → cheap at any size): big floor + ~3× viewport
+  const needCols = Math.max(600, Math.ceil(vw / (doc.grid.cellW * view.zoom)) * 3);
+  const needRows = Math.max(280, Math.ceil(vh / (doc.grid.cellH * view.zoom)) * 3);
   doc.grid.cols = Math.max(doc.grid.cols, needCols);
   doc.grid.rows = Math.max(doc.grid.rows, needRows);
 }
@@ -1400,7 +1385,7 @@ function switchPage(id) {
 }
 function addPage() {
   pushHistory();
-  const p = newPage('Flow ' + (doc.pages.length + 1));
+  const p = newPage('Flow ' + (doc.pages.length + 1), currentMode());
   doc.pages.push(p); activatePage(p.id);
   sel.clear(); fitGridToViewport(); renderAll();
 }
@@ -1723,6 +1708,7 @@ window.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') { e.preventDefault(); if (sel.size) { copySel(false); pasteClip(); } }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 't') { e.preventDefault(); addPage(); }
   if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); view.zoom = 1; view.panX = 0; view.panY = 0; applyView(); }
+  if (e.shiftKey && e.code === 'Digit1') { e.preventDefault(); zoomToFit(); }
   if ((e.key === 'Delete' || e.key === 'Backspace') && sel.size) { e.preventDefault(); deleteSel(); }
   if (e.key === 'Escape') { const hp = $('#helpPop'); if (hp) hp.classList.remove('open'); const ip = $('#iconPop'); if (ip) ip.classList.remove('open'); sel.clear(); renderAll(); }
 });
@@ -1891,6 +1877,22 @@ $('#btnClear').onclick = () => { if (confirm('Wyczyścić całą makietę?')) { 
 $('#zoomIn').onclick = () => { view.zoom = Math.min(5, view.zoom * 1.12); applyView(); };
 $('#zoomOut').onclick = () => { view.zoom = Math.max(0.2, view.zoom * 0.89); applyView(); };
 $('#zoomReset').onclick = () => { view.zoom = 1; view.panX = 0; view.panY = 0; applyView(); };
+function zoomToFit() {
+  if (!doc.objects.length) { view.zoom = 1; view.panX = 0; view.panY = 0; applyView(); return; }
+  let minC = Infinity, minR = Infinity, maxC = -Infinity, maxR = -Infinity;
+  doc.objects.forEach(o => { const b = boundsOf(o); minC = Math.min(minC, b.col); minR = Math.min(minR, b.row); maxC = Math.max(maxC, b.col + b.w); maxR = Math.max(maxR, b.row + b.h); });
+  const area = $('#canvasArea'); const pad = 48;
+  const cw = Math.max(1, (maxC - minC) * cellW), ch = Math.max(1, (maxR - minR) * cellH);
+  view.zoom = Math.max(0.1, Math.min(2, (area.clientWidth - pad * 2) / cw, (area.clientHeight - pad * 2) / ch));
+  view.panX = 0; view.panY = 0; applyView();
+  requestAnimationFrame(() => {
+    const aRect = area.getBoundingClientRect(), artRect = $('#artboard').getBoundingClientRect();
+    view.panX = (aRect.left + pad) - (artRect.left + minC * cellW * view.zoom);
+    view.panY = (aRect.top + pad) - (artRect.top + minR * cellH * view.zoom);
+    applyView();
+  });
+}
+$('#zoomFit').onclick = zoomToFit;
 
 ['gCols','gRows','gCW','gCH'].forEach(id => $('#'+id).addEventListener('change', () => {
   pushHistory();
@@ -2092,7 +2094,7 @@ requestAnimationFrame(() => { applyView(); });
 // load a shared doc (if any) then auto-join its live room so cursors "just work"
 (async () => {
   const openedShared = await loadFromHash();
-  if (openedShared) setTimeout(goLive, 500);
+  if (openedShared) { setTimeout(zoomToFit, 60); setTimeout(goLive, 500); }
 })();
 </script>
 </body>

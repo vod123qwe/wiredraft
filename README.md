@@ -10,12 +10,13 @@ Model obiektów jest zgodny z **wiretext** (`box / text / line / arrow / compone
 
 ## Co potrafi
 
-- **Duży, pannable canvas** — workspace ≥ 240×120 cel (~2× viewport), rośnie z zawartością; grid w kropki,
-  dark/Figma-like, sidebar 300px (nagłówki JetBrains Mono, wersaliki).
-- **Bogata biblioteka komponentów (~45)** — grupy TOOLS / INPUT / LAYOUT / DISPLAY / CHROME (per tryb) /
-  CONTENT: m.in. heading, link, badge, chip, kbd, slider, stepper±, pagination, accordion, menu, snackbar,
-  FAB, spinner, stat, chart (bary), video, grouplist (table view), page-control — obok bazowych input/button/
-  card/modal/table/alert/nav/tabs itd. i wariantów iOS.
+- **Ogromny, pannable canvas** — workspace ≥ 600×280 cel, rośnie z zawartością; siatka kropek to tanie tło CSS
+  (skaluje się bez limitu). **Zoom-to-fit** (przycisk ⊡ / Shift+1) dopasowuje widok do wszystkich ekranów.
+- **Domyślnie tryb mobilny** — narzędzie startuje w trybie **Mobile App** (komponenty + ramka telefonu).
+- **Uporządkowany sidebar** — grupy: TOOLS · **MOBILE** (per tryb, na górze) · FORMS · COMPONENTS (zwinięta) ·
+  CONTENT (zwinięta). ~45 komponentów: bazowe (button/input/card/modal/table/nav/tabs…), warianty iOS
+  (status bar, nav, tab bar, segmented, switch, search, grouplist, page-control, home indicator) oraz
+  heading/link/badge/chip/slider/stepper±/pagination/accordion/menu/snackbar/FAB/spinner/stat/chart/video.
 - **Pages** — wiele stron w projekcie, każda = osobny canvas/ścieżka (własne obiekty + warstwy). **Zakładki
   na górze canvasu** (jak w Figmie): klik = przełącz, dwuklik = zmień nazwę, × = usuń, `+` = nowa. Kontrolki
   (undo/redo, zoom, **? = skróty**) po prawej stronie górnego paska.

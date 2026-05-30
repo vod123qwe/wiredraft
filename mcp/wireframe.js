@@ -1,6 +1,6 @@
 // WireDraft — shared wireframe logic for the MCP server (pure JS, no DOM).
 // Mirrors the renderers in index.html so ASCII preview matches the editor,
-// and builds editor URLs with the document encoded in the #d= hash.
+// and builds editor URLs with the document encoded in the #z= hash (gzip).
 
 import { gzipSync } from 'node:zlib';
 

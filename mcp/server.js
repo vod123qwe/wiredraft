@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // WireDraft MCP server — generates an editable WireDraft URL (state encoded in the
-// #d= hash) from wire objects, plus an ASCII preview. Pair it with Claude Code to
+// #z= hash) from wire objects, plus an ASCII preview. Pair it with Claude Code to
 // draft lo-fi wireframes, then open the link to refine them and export to Figma.
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -52,7 +52,7 @@ const tools = [
   {
     name: 'create_wireframe',
     description:
-      'Build a WireDraft wireframe and return an editable URL (state encoded in the #d= hash) that opens in the WireDraft editor — plus an ASCII preview. ' +
+      'Build a WireDraft wireframe and return an editable URL (state encoded in the #z= hash) that opens in the WireDraft editor — plus an ASCII preview. ' +
       'Use for lo-fi mockups/flows before hi-fi work in Figma. Pass either a single `objects` array, or `pages` (one canvas per flow). ' + LAYOUT_GUIDE,
     inputSchema: {
       type: 'object',

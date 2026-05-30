@@ -26,10 +26,10 @@ Model obiektów jest zgodny z **wiretext** (`box / text / line / arrow / compone
   `tabbar`, `segmented` (« »), `iosswitch` ((  ●)), `searchbar` (⌕), `homeindicator` (▬▬▬). Tryb zapisuje się
   w projekcie (share link / JSON).
 - **Współdzielenie** — każdy projekt ma **unikalny kod** (`WD-XXXXXXXX`, w sekcji SHARE). „Udostępnij projekt"
-  kopiuje link `#d=…` z całym projektem (wszystkie strony) — działa dla każdego, bez serwera.
+  kopiuje link `#z=…` z całym projektem (wszystkie strony) — działa dla każdego, bez serwera.
 - **Live session (P2P)** — „Live session" łączy wszystkich z tym samym kodem w jeden pokój przez **WebRTC
   (Trystero/nostr)**: **kursory innych na żywo** (z nazwą/kolorem, filtrowane per strona) + **synchronizacja
-  zmian** (last-writer-wins, debounce). Bez własnego serwera. Otwarcie linku `#d=…` auto-dołącza do sesji.
+  zmian** (last-writer-wins, debounce). Bez własnego serwera. Otwarcie linku `#z=…` auto-dołącza do sesji.
 - **Zaznaczanie wielu** — marquee (przeciągnij po pustym), Shift = dokładanie; przesuwanie grupy razem.
 - **Sidebar jak wiretext** — sekcje: **Layers** (◉ widoczność, ◇ lock, „+ Layer", licznik obiektów),
   **Tools** (Select, Box, Text, Line, Arrow, Connector), **Input** (Button, Input, Select, Checkbox, Radio,
@@ -68,7 +68,7 @@ W repo jest serwer **MCP** (`mcp/server.js`), który pozwala Claude Code generow
 WireDraft jednym linkiem. Narzędzia:
 
 - **`create_wireframe`** — z `objects[]` (lub `pages[]`) buduje makietę i zwraca **edytowalny URL**
-  (`https://vod123qwe.github.io/wiredraft/#d=…`) + podgląd ASCII.
+  (`https://vod123qwe.github.io/wiredraft/#z=…`) + podgląd ASCII.
 - **`render_wireframe`** — sam podgląd ASCII (do sprawdzenia układu).
 
 Podłączenie (terminal, w katalogu projektu):

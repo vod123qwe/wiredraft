@@ -13,10 +13,11 @@ Model obiektów jest zgodny z **wiretext** (`box / text / line / arrow / compone
 - **Ogromny, pannable canvas** — workspace ≥ 600×280 cel, rośnie z zawartością; siatka kropek to tanie tło CSS
   (skaluje się bez limitu). **Zoom-to-fit** (przycisk ⊡ / Shift+1) dopasowuje widok do wszystkich ekranów.
 - **Domyślnie tryb mobilny** — narzędzie startuje w trybie **Mobile App** (komponenty + ramka telefonu).
-- **Uporządkowany sidebar** — grupy: TOOLS · **MOBILE** (per tryb, na górze) · FORMS · COMPONENTS (zwinięta) ·
-  CONTENT (zwinięta). ~45 komponentów: bazowe (button/input/card/modal/table/nav/tabs…), warianty iOS
-  (status bar, nav, tab bar, segmented, switch, search, grouplist, page-control, home indicator) oraz
-  heading/link/badge/chip/slider/stepper±/pagination/accordion/menu/snackbar/FAB/spinner/stat/chart/video.
+- **Uporządkowany sidebar (mobile-first)** — grupy: **TOOLS · MOBILE** (chrome per tryb, na górze) **· FORMS ·
+  CONTAINERS · NAVIGATION · DISPLAY** (trzy ostatnie zwinięte domyślnie). ~55 komponentów. Wzorce mobilne m.in.:
+  app bar, list item, bottom sheet, banner, OTP/code, textarea, date field, chip-row, carousel, empty state, map,
+  FAB — obok wariantów iOS (status bar, nav, tab bar, segmented, switch, search, grouplist, page-control, home
+  indicator) i bazowych (button/input/card/modal/table/list/accordion/menu/tabs/heading/badge/chip/stat/chart…).
 - **Pages** — wiele stron w projekcie, każda = osobny canvas/ścieżka (własne obiekty + warstwy). **Zakładki
   na górze canvasu** (jak w Figmie): klik = przełącz, dwuklik = zmień nazwę, × = usuń, `+` = nowa. Kontrolki
   (undo/redo, zoom, **? = skróty**) po prawej stronie górnego paska.

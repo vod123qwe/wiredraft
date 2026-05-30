@@ -474,12 +474,17 @@
     </div>
 
     <div class="section collapsed" id="secLayout">
-      <button class="section-head" data-sec><span class="caret">▾</span> COMPONENTS</button>
+      <button class="section-head" data-sec><span class="caret">▾</span> CONTAINERS</button>
       <div class="section-body"><div class="palette" data-group="secLayout"></div></div>
     </div>
 
+    <div class="section collapsed" id="secNav">
+      <button class="section-head" data-sec><span class="caret">▾</span> NAVIGATION</button>
+      <div class="section-body"><div class="palette" data-group="secNav"></div></div>
+    </div>
+
     <div class="section collapsed" id="secContent">
-      <button class="section-head" data-sec><span class="caret">▾</span> CONTENT</button>
+      <button class="section-head" data-sec><span class="caret">▾</span> DISPLAY</button>
       <div class="section-body"><div class="palette" data-group="secContent"></div></div>
     </div>
 
@@ -903,6 +908,79 @@ function renderComponent(b, o, c, r, w, h) {
     case 'video': { drawBoxFrame(b, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, c, r, w, h, '▶'); return; }
     case 'grouplist': { drawBoxFrame(b, c, r, w, h, bs, 'solid'); const items = o.items || ['Settings','Privacy','About']; items.forEach((it, i) => { const rr = r + 1 + i * 2; if (rr < r + h - 1) { writeText(b, c + 2, rr, it.slice(0, w - 6)); put(b, c + w - 3, rr, '›'); if (i < items.length - 1 && rr + 1 < r + h - 1) for (let x = 2; x < w - 2; x++) put(b, c + x, rr + 1, '─'); } }); return; }
     case 'pagecontrol': { const n = o.maxValue ?? 4, act = o.activeStep ?? 0; let s = ''; for (let i = 0; i < n; i++) s += (i === act ? '● ' : '○ '); const t = s.trim(); writeText(b, c + centerPad(w, t.length), r + Math.floor(h / 2), t); return; }
+    case 'listitem': {
+      const lead = o.icon || '●'; const mid = r + Math.floor((h - (o.body ? 1 : 0)) / 2);
+      writeText(b, c, mid, (lead + '  ' + (lab || 'Title')).slice(0, w - 2));
+      if (o.body) writeText(b, c + 3, mid + 1, String(o.body).slice(0, w - 5));
+      put(b, c + w - 1, mid, '›');
+      for (let i = 0; i < w; i++) put(b, c + i, r + h - 1, '─');
+      return;
+    }
+    case 'appbar': {
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      const lead = o.icon || '≡'; const mid = r + Math.floor(h / 2);
+      writeText(b, c + 2, mid, (lead + '  ' + (lab || 'Title')).slice(0, w - 4));
+      const right = (o.items || ['⋯']).join('  ');
+      writeText(b, c + Math.max(2, w - 2 - right.length), mid, right);
+      return;
+    }
+    case 'bottomsheet': {
+      drawBoxFrame(b, c, r, w, h, o.borderStyle || 'rounded', 'solid');
+      const grab = '────'; writeText(b, c + centerPad(w, grab.length), r + 1, grab);
+      if (lab) writeText(b, c + 2, r + 2, lab.slice(0, w - 4));
+      for (let i = 1; i < w - 1; i++) put(b, c + i, r + 3, '─');
+      if (o.body) String(o.body).split('\n').forEach((ln, i) => { if (r + 4 + i < r + h - 1) writeText(b, c + 2, r + 4 + i, ln.slice(0, w - 4)); });
+      return;
+    }
+    case 'banner': {
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      const mid = r + Math.floor(h / 2); const act = o.body || 'Action';
+      writeText(b, c + 2, mid, ((o.icon || 'ⓘ') + ' ' + (lab || 'Banner message')).slice(0, w - 5 - act.length));
+      writeText(b, c + Math.max(2, w - 2 - act.length), mid, act);
+      return;
+    }
+    case 'textarea': {
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      writeText(b, c + 2, r + 1, (lab || 'Text…').slice(0, w - 4));
+      return;
+    }
+    case 'datefield': {
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      writeText(b, c + 2, r + Math.floor(h / 2), (lab || 'YYYY-MM-DD').slice(0, w - 5));
+      put(b, c + w - 3, r + Math.floor(h / 2), '▦');
+      return;
+    }
+    case 'otp': {
+      const n = o.maxValue || 4; let x = c;
+      for (let i = 0; i < n && x + 3 <= c + w; i++) { drawBoxFrame(b, x, r, 4, 3, 'single', 'solid'); put(b, x + 1, r + 1, (o.label || '')[i] || '_'); x += 5; }
+      return;
+    }
+    case 'chipgroup': {
+      const items = o.items || ['All', 'Active', 'Done'];
+      writeText(b, c, r + Math.floor(h / 2), items.map(it => '[' + it + ']').join(' ').slice(0, w));
+      return;
+    }
+    case 'carousel': {
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      drawCenteredLabel(b, c, r, w, h - 1, o.icon || '⊠');
+      const n = o.maxValue || 3, act = o.activeStep || 0; let dots = '';
+      for (let i = 0; i < n; i++) dots += (i === act ? '● ' : '○ ');
+      dots = dots.trim(); writeText(b, c + centerPad(w, dots.length), r + h - 2, dots);
+      return;
+    }
+    case 'emptystate': {
+      const midR = r + Math.floor(h / 2);
+      const icon = o.icon || '∅'; put(b, c + Math.floor((w - 1) / 2), midR - 1, icon);
+      const title = lab || 'Nothing here'; writeText(b, c + centerPad(w, title.length), midR, title.slice(0, w));
+      if (o.body) writeText(b, c + centerPad(w, o.body.length), midR + 1, o.body.slice(0, w));
+      return;
+    }
+    case 'map': {
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      for (let rr = r + 1; rr < r + h - 1; rr += 2) for (let cc = c + 1; cc < c + w - 1; cc += 4) put(b, cc, rr, '·');
+      drawCenteredLabel(b, c, r, w, h, '⌖ ' + (lab || 'Map'));
+      return;
+    }
     default:
       drawBoxFrame(b, c, r, w, h, bs, 'solid');
       drawCenteredLabel(b, c, r, w, h, lab || ct);
@@ -1105,59 +1183,72 @@ const GROUPS = {
   secInput: [
     { t:'button', gly:'▭', nm:'Button' },
     { t:'input', gly:'⌶', nm:'Input' },
+    { t:'textarea', gly:'☷', nm:'Textarea' },
     { t:'select', gly:'▾', nm:'Select' },
+    { t:'datefield', gly:'◫', nm:'Date' },
     { t:'checkbox', gly:'☑', nm:'Check' },
     { t:'radio', gly:'◉', nm:'Radio' },
     { t:'toggle', gly:'◖', nm:'Toggle' },
     { t:'slider', gly:'⊝', nm:'Slider' },
     { t:'numstep', gly:'∓', nm:'Stepper±' },
+    { t:'otp', gly:'⌗', nm:'OTP' },
   ],
   secLayout: [
     { t:'card', gly:'▤', nm:'Card' },
     { t:'modal', gly:'❐', nm:'Modal' },
+    { t:'bottomsheet', gly:'⊔', nm:'Sheet' },
+    { t:'listitem', gly:'≣', nm:'List item' },
+    { t:'list', gly:'☰', nm:'List' },
     { t:'table', gly:'▦', nm:'Table' },
-    { t:'browser', gly:'⊡', nm:'Browser' },
+    { t:'accordion', gly:'▾', nm:'Accordion' },
+    { t:'alert', gly:'⚠', nm:'Alert' },
+    { t:'banner', gly:'◳', nm:'Banner' },
+    { t:'emptystate', gly:'∅', nm:'Empty' },
+  ],
+  secNav: [
+    { t:'appbar', gly:'⊤', nm:'App bar' },
     { t:'navbar', gly:'≡', nm:'Navbar' },
     { t:'tabs', gly:'⊟', nm:'Tabs' },
+    { t:'segmented', gly:'▢', nm:'Segment' },
     { t:'breadcrumb', gly:'›', nm:'Crumb' },
-    { t:'alert', gly:'⚠', nm:'Alert' },
-    { t:'list', gly:'☰', nm:'List' },
-    { t:'avatar', gly:'☻', nm:'Avatar' },
-    { t:'image', gly:'⊠', nm:'Image' },
-    { t:'icon', gly:'★', nm:'Icon' },
-    { t:'progress', gly:'▰', nm:'Progress' },
-    { t:'stepper', gly:'◍', nm:'Stepper' },
-    { t:'rating', gly:'✦', nm:'Rating' },
-    { t:'divider', gly:'—', nm:'Divider' },
-    { t:'skeleton', gly:'▥', nm:'Skeleton' },
+    { t:'pagination', gly:'⋯', nm:'Pages' },
+    { t:'menu', gly:'⋮', nm:'Menu' },
+    { t:'fab', gly:'⊕', nm:'FAB' },
   ],
   secContent: [
     { t:'heading', gly:'H', nm:'Heading' },
     { t:'link', gly:'⎘', nm:'Link' },
     { t:'badge', gly:'❸', nm:'Badge' },
     { t:'chip', gly:'⬚', nm:'Chip' },
-    { t:'kbd', gly:'⌨', nm:'Key' },
-    { t:'pagination', gly:'⋯', nm:'Pages' },
-    { t:'accordion', gly:'▾', nm:'Accordion' },
-    { t:'menu', gly:'☰', nm:'Menu' },
-    { t:'snackbar', gly:'▭', nm:'Snackbar' },
-    { t:'fab', gly:'⊕', nm:'FAB' },
-    { t:'spinner', gly:'◐', nm:'Spinner' },
-    { t:'statcard', gly:'▦', nm:'Stat' },
-    { t:'chartbar', gly:'▇', nm:'Chart' },
+    { t:'chipgroup', gly:'☶', nm:'Chips' },
+    { t:'avatar', gly:'☻', nm:'Avatar' },
+    { t:'image', gly:'⊠', nm:'Image' },
+    { t:'icon', gly:'★', nm:'Icon' },
+    { t:'carousel', gly:'◰', nm:'Carousel' },
+    { t:'map', gly:'⌖', nm:'Map' },
     { t:'video', gly:'▶', nm:'Video' },
+    { t:'rating', gly:'✦', nm:'Rating' },
+    { t:'progress', gly:'▰', nm:'Progress' },
+    { t:'spinner', gly:'◐', nm:'Spinner' },
+    { t:'skeleton', gly:'▥', nm:'Skeleton' },
+    { t:'statcard', gly:'⊞', nm:'Stat' },
+    { t:'chartbar', gly:'▇', nm:'Chart' },
+    { t:'divider', gly:'—', nm:'Divider' },
+    { t:'snackbar', gly:'⊏', nm:'Snackbar' },
+    { t:'stepper', gly:'◍', nm:'Stepper' },
+    { t:'kbd', gly:'⌨', nm:'Key' },
   ],
 };
 // flat glyph lookup for the object list
 const GLY = {};
 Object.values(GROUPS).flat().forEach(i => { if (i.t !== 'pointer') GLY[i.t] = i.gly; });
-Object.assign(GLY, { statusbar:'▭', iosnav:'‹', tabbar:'⊞', segmented:'▢', iosswitch:'◉', searchbar:'⌕', homeindicator:'▬', grouplist:'☰', pagecontrol:'●' });
+Object.assign(GLY, { statusbar:'▭', iosnav:'‹', tabbar:'⊞', segmented:'▢', iosswitch:'◉', searchbar:'⌕', homeindicator:'▬', grouplist:'☰', pagecontrol:'●', browser:'⊡' });
 
 /* platform chrome group — contents depend on the active page's design mode */
 const CHROME = {
   desktop: [{ t:'__frame', gly:'▭', nm:'Frame' }, { t:'browser', gly:'⊡', nm:'Browser' }, { t:'navbar', gly:'≡', nm:'Top nav' }, { t:'searchbar', gly:'⌕', nm:'Search' }],
-  mobile:  [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'iosnav', gly:'‹', nm:'Nav bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
-  ios:     [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'iosnav', gly:'‹', nm:'Nav bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'iosswitch', gly:'◉', nm:'Switch' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
+  mobile:  [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'appbar', gly:'⊤', nm:'App bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'listitem', gly:'≣', nm:'List item' }, { t:'bottomsheet', gly:'⊔', nm:'Sheet' }, { t:'fab', gly:'⊕', nm:'FAB' }, { t:'banner', gly:'◳', nm:'Banner' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
+  ios:     [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'iosnav', gly:'‹', nm:'Nav bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'iosswitch', gly:'◉', nm:'Switch' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'listitem', gly:'≣', nm:'List item' }, { t:'bottomsheet', gly:'⊔', nm:'Sheet' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
 };
 function renderChromeGroup() {
   const m = currentMode();
@@ -1307,6 +1398,17 @@ function compDefaults(t) {
     case 'video': return { w:32, h:10, extra:{} };
     case 'grouplist': return { w:34, h:8, extra:{ items:['Settings','Privacy','About'] } };
     case 'pagecontrol': return { w:16, h:1, extra:{ maxValue:4, activeStep:0 } };
+    case 'listitem': return { w:34, h:4, extra:{ label:'List item', body:'Subtitle', icon:'●' } };
+    case 'appbar': return { w:42, h:3, extra:{ label:'Title', icon:'≡', items:['⋯'] } };
+    case 'bottomsheet': return { w:42, h:14, extra:{ label:'Sheet title', body:'Sheet content…' } };
+    case 'banner': return { w:40, h:3, extra:{ label:'Informacja dla użytkownika', body:'Action', icon:'ⓘ' } };
+    case 'textarea': return { w:28, h:5, extra:{ label:'Wpisz tekst…' } };
+    case 'datefield': return { w:24, h:3, extra:{ label:'YYYY-MM-DD' } };
+    case 'otp': return { w:24, h:3, extra:{ maxValue:4, label:'' } };
+    case 'chipgroup': return { w:34, h:1, extra:{ items:['All','Active','Done'] } };
+    case 'carousel': return { w:40, h:12, extra:{ icon:'⊠', maxValue:3, activeStep:0 } };
+    case 'emptystate': return { w:34, h:7, extra:{ label:'Brak elementów', body:'Dodaj pierwszy', icon:'∅' } };
+    case 'map': return { w:40, h:12, extra:{ label:'Map' } };
     default: return { w:20, h:5, extra:{ label:t } };
   }
 }
@@ -1314,10 +1416,10 @@ function compDefaults(t) {
 /* ---------- design modes (device frames) ---------- */
 const MODES = {
   desktop: { label:'Web Desktop', w:150, h:84, border:'single', chrome:['browserTop'] },
-  mobile:  { label:'Web Mobile',  w:42,  h:84, border:'rounded', chrome:['statusbar','bottomnav'] },
+  mobile:  { label:'Mobile App',  w:42,  h:84, border:'rounded', chrome:['statusbar','appbar','tabbar','homeindicator'] },
   ios:     { label:'iOS App',     w:42,  h:90, border:'rounded', chrome:['statusbar','iosnav','tabbar','homeindicator'] },
 };
-function currentMode() { const p = doc.pages.find(x => x.id === doc.activePage); return (p && p.mode) || 'desktop'; }
+function currentMode() { const p = doc.pages.find(x => x.id === doc.activePage); return (p && p.mode) || 'mobile'; }
 function setMode(m) { const p = doc.pages.find(x => x.id === doc.activePage); if (p) p.mode = m; renderChromeGroup(); }
 function mkComp(ct, col, row, w, h, extra, gid) { return { id: uid(), type: 'component', componentType: ct, layerId: doc.layers[0].id, position: { col, row }, width: w, height: h, groupId: gid, ...extra }; }
 function insertFrame() {
@@ -1334,6 +1436,7 @@ function insertFrame() {
     if (ch === 'browserTop') objs.push(mkComp('browser', pos.col + 1, pos.row + 1, M.w - 2, 5, { label: 'example.com' }, gid));
     if (ch === 'statusbar') objs.push(mkComp('statusbar', pos.col + 1, pos.row + 1, M.w - 2, 1, { label: '9:41', body: '▮▮▮ 100%' }, gid));
     if (ch === 'iosnav') objs.push(mkComp('iosnav', pos.col + 1, pos.row + 2, M.w - 2, 3, { label: 'Title', items: ['Back', ''] }, gid));
+    if (ch === 'appbar') objs.push(mkComp('appbar', pos.col + 1, pos.row + 2, M.w - 2, 3, { label: 'Title', icon: '≡', items: ['⋯'] }, gid));
     if (ch === 'tabbar') objs.push(mkComp('tabbar', pos.col + 1, pos.row + M.h - 4, M.w - 2, 3, { items: ['Home', 'Search', 'Profile'] }, gid));
     if (ch === 'bottomnav') objs.push(mkComp('tabbar', pos.col + 1, pos.row + M.h - 2, M.w - 2, 1, { items: ['Home', 'Search', 'Me'] }, gid));
     if (ch === 'homeindicator') objs.push(mkComp('homeindicator', pos.col + 1, pos.row + M.h - 1, M.w - 2, 1, {}, gid));
@@ -1455,24 +1558,25 @@ function renderProps() {
   if (o.type === 'text') html += '<div class="lbl-mini">Content</div><label class="field"><textarea class="note-input" data-prop="content">'+(o.content||'')+'</textarea></label>';
   if (o.type === 'component') {
     const ct = o.componentType;
-    const BORDERED = ['button','input','select','navbar','tabs','card','modal','alert','table','browser','progress','image','avatar','iosnav','tabbar','segmented','searchbar'];
-    const ICONABLE = ['icon','image','button','input','select','fab'];
+    const BORDERED = ['button','input','select','navbar','tabs','card','modal','alert','table','browser','progress','image','avatar','iosnav','tabbar','segmented','searchbar','appbar','bottomsheet','banner','textarea','datefield','carousel','map'];
+    const ICONABLE = ['icon','image','button','input','select','fab','listitem','appbar','banner','carousel','emptystate','map'];
     if ('label' in (o)) { const ll = (ct === 'input' || ct === 'select') ? 'Tekst' : ct === 'statusbar' ? 'Czas' : ct === 'iosnav' ? 'Tytuł' : 'Label'; html += '<div class="lbl-mini">' + ll + '</div>' + fld('label','T',o.label); }
     if (['checkbox','radio','toggle','iosswitch','accordion'].includes(ct)) html += '<div class="lbl-mini">State</div><div class="seg" data-seg="checked" style="grid-template-columns:1fr 1fr"><button data-val="true" class="' + (o.checked !== false ? 'on' : '') + '">On</button><button data-val="false" class="' + (o.checked === false ? 'on' : '') + '">Off</button></div>';
     if (ct === 'navbar') html += '<div class="lbl-mini">Items (comma)</div>' + fld('navItems','≡',(o.navItems||[]).join(', '));
     if (ct === 'tabs') html += '<div class="lbl-mini">Tabs (comma)</div>' + fld('tabs','⊟',(o.tabs||[]).join(', '));
-    if (['list','breadcrumb','stepper','tabbar','segmented','menu','grouplist','chartbar'].includes(ct)) html += '<div class="lbl-mini">Items (comma)</div>' + fld('items','☰',(o.items||[]).join(', '));
+    if (['list','breadcrumb','stepper','tabbar','segmented','menu','grouplist','chartbar','appbar','chipgroup'].includes(ct)) html += '<div class="lbl-mini">Items (comma)</div>' + fld('items','☰',(o.items||[]).join(', '));
     if (ct === 'iosnav') html += '<div class="lbl-mini">Back / Right (comma)</div>' + fld('items','‹',(o.items||[]).join(', '));
     if (ct === 'list') html += '<div class="lbl-mini">List style</div><div class="seg" data-seg="listStyle" style="grid-template-columns:repeat(3,1fr)">' + ['bullet','number','dash'].map(s => `<button data-val="${s}" class="${(o.listStyle||'bullet')===s?'on':''}">${s}</button>`).join('') + '</div>';
     if (['stepper','segmented'].includes(ct)) html += '<div class="lbl-mini">Active index</div>' + fld('activeStep','#',o.activeStep ?? 0,'number','min=0');
     if (ct === 'progress') html += '<div class="lbl-mini">Progress %</div>' + fld('progress','%',o.progress,'number','min=0 max=100');
     if (ct === 'rating') html += '<div class="lbl-mini">Rating</div><div class="row pair">' + fld('value','★',o.value ?? 0,'number') + fld('maxValue','/',o.maxValue ?? 5,'number') + '</div>';
     if (ct === 'alert') html += '<div class="lbl-mini">Type</div><div class="seg" data-seg="alertType">' + ['info','warning','error','success'].map(s=>`<button data-val="${s}" class="${(o.alertType||'info')===s?'on':''}">${s[0].toUpperCase()}</button>`).join('')+'</div>';
-    if (['card','modal','alert','accordion','statcard'].includes(ct)) html += '<div class="lbl-mini">Body</div><label class="field"><textarea class="note-input" data-prop="body">'+(o.body||'')+'</textarea></label>';
+    if (['card','modal','alert','accordion','statcard','bottomsheet','banner','emptystate','listitem'].includes(ct)) html += '<div class="lbl-mini">Body</div><label class="field"><textarea class="note-input" data-prop="body">'+(o.body||'')+'</textarea></label>';
     if (ct === 'statusbar') html += '<div class="lbl-mini">Prawa strona</div>' + fld('body','▮',o.body||'');
     if (ct === 'snackbar') html += '<div class="lbl-mini">Akcja</div>' + fld('body','↩',o.body||'');
     if (['slider','numstep'].includes(ct)) html += '<div class="lbl-mini">Wartość' + (ct === 'slider' ? ' / max' : '') + '</div>' + (ct === 'slider' ? ('<div class="row pair">' + fld('value','#',o.value ?? 50,'number') + fld('maxValue','/',o.maxValue ?? 100,'number') + '</div>') : fld('value','#',o.value ?? 1,'number'));
-    if (['pagination','pagecontrol'].includes(ct)) html += '<div class="lbl-mini">Liczba / aktywna</div><div class="row pair">' + fld('maxValue','n',o.maxValue ?? 4,'number') + fld('activeStep','#',o.activeStep ?? 0,'number') + '</div>';
+    if (['pagination','pagecontrol','carousel'].includes(ct)) html += '<div class="lbl-mini">Liczba / aktywna</div><div class="row pair">' + fld('maxValue','n',o.maxValue ?? 4,'number') + fld('activeStep','#',o.activeStep ?? 0,'number') + '</div>';
+    if (ct === 'otp') html += '<div class="lbl-mini">Liczba pól</div>' + fld('maxValue','n',o.maxValue ?? 4,'number');
     if (BORDERED.includes(ct)) html += borderSegHtml(o.borderStyle || (ct === 'modal' ? 'double' : ct === 'avatar' ? 'rounded' : 'single'));
     if (ICONABLE.includes(ct)) html += '<div class="lbl-mini">Icon</div><button type="button" class="field icon-field" data-iconpick><span class="k">◇</span><span class="icon-cur">' + (o.icon || '∅ brak') + '</span><span class="icon-caret">▾</span></button>';
   }

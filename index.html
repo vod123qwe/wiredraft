@@ -764,14 +764,16 @@ function renderComponent(b, o, c, r, w, h) {
 
   switch (ct) {
     case 'button':
-      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      if (o.variant !== 'text') drawBoxFrame(b, c, r, w, h, bs, 'solid');
       drawCenteredLabel(b, c, r, w, h, ic + (lab || 'Button')); return;
     case 'input':
     case 'select': {
-      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      let bt = r, bh = h;
+      if (o.variant === 'labeled') { writeText(b, c, r, (o.fieldLabel || 'Label').slice(0, w)); bt = r + 1; bh = h - 1; }
+      drawBoxFrame(b, c, bt, w, bh, bs, 'solid');
       const txt = ic + (lab || (ct === 'select' ? 'Select' : 'Input'));
-      writeText(b, c + 2, r + Math.floor(h / 2), txt.slice(0, w - 4));
-      if (ct === 'select') put(b, c + w - 3, r + Math.floor(h / 2), '▾');
+      writeText(b, c + 2, bt + Math.floor(bh / 2), txt.slice(0, w - 4));
+      if (ct === 'select') put(b, c + w - 3, bt + Math.floor(bh / 2), '▾');
       return;
     }
     case 'checkbox': writeText(b, c, r + Math.floor(h / 2), (o.checked ? '[✓] ' : '[ ] ') + lab); return;
@@ -806,7 +808,8 @@ function renderComponent(b, o, c, r, w, h) {
       for (let i = 0; i < inner; i++) put(b, c + 1 + i, mid, i < filled ? '▓' : '░'); return;
     }
     case 'avatar': {
-      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      const ab = o.borderStyle || (o.variant === 'square' ? 'single' : 'rounded');
+      drawBoxFrame(b, c, r, w, h, ab, 'solid');
       const ini = (lab || 'A').slice(0, 2).split('').join(' ');
       drawCenteredLabel(b, c, r, w, h, ini); return;
     }
@@ -958,14 +961,18 @@ function renderComponent(b, o, c, r, w, h) {
       return;
     }
     case 'textarea': {
-      drawBoxFrame(b, c, r, w, h, bs, 'solid');
-      writeText(b, c + 2, r + 1, (lab || 'Text…').slice(0, w - 4));
+      let bt = r, bh = h;
+      if (o.variant === 'labeled') { writeText(b, c, r, (o.fieldLabel || 'Label').slice(0, w)); bt = r + 1; bh = h - 1; }
+      drawBoxFrame(b, c, bt, w, bh, bs, 'solid');
+      writeText(b, c + 2, bt + 1, (lab || 'Text…').slice(0, w - 4));
       return;
     }
     case 'datefield': {
-      drawBoxFrame(b, c, r, w, h, bs, 'solid');
-      writeText(b, c + 2, r + Math.floor(h / 2), (lab || 'YYYY-MM-DD').slice(0, w - 5));
-      put(b, c + w - 3, r + Math.floor(h / 2), '▦');
+      let bt = r, bh = h;
+      if (o.variant === 'labeled') { writeText(b, c, r, (o.fieldLabel || 'Label').slice(0, w)); bt = r + 1; bh = h - 1; }
+      drawBoxFrame(b, c, bt, w, bh, bs, 'solid');
+      writeText(b, c + 2, bt + Math.floor(bh / 2), (lab || 'YYYY-MM-DD').slice(0, w - 5));
+      put(b, c + w - 3, bt + Math.floor(bh / 2), '▦');
       return;
     }
     case 'otp': {
@@ -1525,6 +1532,16 @@ function selObj() { return sel.size === 1 ? objById([...sel][0]) : null; }
 function borderSegHtml(cur) {
   return '<div class="lbl-mini">Border</div><div class="seg" data-seg="borderStyle">' + ['single','double','rounded','heavy'].map(s => `<button data-val="${s}" class="${cur===s?'on':''}">${s[0].toUpperCase()}</button>`).join('') + '</div>';
 }
+/* contextual per-component variants (light editing) */
+const VARIANTS = {
+  input: ['plain', 'labeled'], select: ['plain', 'labeled'], textarea: ['plain', 'labeled'], datefield: ['plain', 'labeled'],
+  button: ['filled', 'text'], avatar: ['circle', 'square'],
+};
+function variantHtml(ct, cur) {
+  const vs = VARIANTS[ct]; if (!vs) return '';
+  const c = cur || vs[0];
+  return '<div class="lbl-mini">Wariant</div><div class="seg" data-seg="variant" style="grid-template-columns:repeat(' + vs.length + ',1fr)">' + vs.map(v => `<button data-val="${v}" class="${c === v ? 'on' : ''}">${v}</button>`).join('') + '</div>';
+}
 function escAttr(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 /* editable list of items (add / edit copy / remove) — far better than a comma field */
 function itemsEditorHtml(key, label, items) {
@@ -1610,6 +1627,8 @@ function renderProps() {
     const ct = o.componentType;
     const BORDERED = ['button','input','select','navbar','tabs','card','modal','alert','table','browser','progress','image','avatar','iosnav','tabbar','segmented','searchbar','appbar','bottomsheet','banner','textarea','datefield','carousel','map','video','kbd'];
     const ICONABLE = ['icon','image','button','input','select','fab','listitem','appbar','banner','carousel','emptystate','map'];
+    html += variantHtml(ct, o.variant);
+    if (['input','select','textarea','datefield'].includes(ct) && o.variant === 'labeled') html += '<div class="lbl-mini">Label nad polem</div>' + fld('fieldLabel','L', o.fieldLabel || '');
     if ('label' in (o)) { const ll = (ct === 'input' || ct === 'select') ? 'Tekst' : ct === 'statusbar' ? 'Czas' : ct === 'iosnav' ? 'Tytuł' : 'Label'; html += '<div class="lbl-mini">' + ll + '</div>' + fld('label','T',o.label); }
     if (['checkbox','radio','toggle','iosswitch','accordion'].includes(ct)) html += '<div class="lbl-mini">State</div><div class="seg" data-seg="checked" style="grid-template-columns:1fr 1fr"><button data-val="true" class="' + (o.checked !== false ? 'on' : '') + '">On</button><button data-val="false" class="' + (o.checked === false ? 'on' : '') + '">Off</button></div>';
     if (ct === 'navbar') html += itemsEditorHtml('navItems', 'Items', o.navItems);
@@ -1664,6 +1683,12 @@ function bindProps(o) {
       pushHistory();
       let v = b.dataset.val;
       if (v === 'true') v = true; else if (v === 'false') v = false;
+      // labeled fields need one extra row for the label — adjust height automatically
+      if (seg.dataset.seg === 'variant' && ['input','select','textarea','datefield'].includes(o.componentType)) {
+        const was = o.variant === 'labeled';
+        if (v === 'labeled' && !was) o.height = (o.height || 3) + 1;
+        else if (v === 'plain' && was) o.height = Math.max(2, (o.height || 4) - 1);
+      }
       o[seg.dataset.seg] = v;
       renderAll();
     });

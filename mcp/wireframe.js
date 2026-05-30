@@ -268,7 +268,10 @@ export function makeDoc(input = {}) {
   }
   pages.forEach(pg => (pg.objects || []).forEach(o => { if (!o.id) o.id = uid(); if (!o.layerId) o.layerId = 'default'; if (!o.position) o.position = { col: 0, row: 0 }; }));
   fitGrid(grid, pages);
-  return { version: 2, code: genCode(), grid, pages, activePage: pages[0].id };
+  // Project code = Live-session room id. Precedence: arg `code` → env WIREDRAFT_CODE → random.
+  const fixed = input.code || process.env.WIREDRAFT_CODE;
+  const code = (fixed && /^WD-[A-Z0-9]{4,}$/i.test(fixed)) ? fixed.toUpperCase() : genCode();
+  return { version: 2, code, grid, pages, activePage: pages[0].id };
 }
 
 export function encodeUrl(doc, baseUrl = DEFAULT_BASE) {

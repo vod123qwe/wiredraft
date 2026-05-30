@@ -61,6 +61,7 @@ const tools = [
         pages: { type: 'array', description: 'Multiple flows; each is its own canvas.', items: { type: 'object', properties: { name: { type: 'string' }, objects: { type: 'array', items: WIRE_OBJECT } }, required: ['objects'] } },
         name: { type: 'string', description: 'Page name when using `objects`.' },
         grid: GRID,
+        code: { type: 'string', description: 'Fixed project code (np. WD-XXXXXXXX). Emitowany do linku → wszystkie linki z tym kodem otwierają ten sam pokój Live session / przestrzeń. Domyślnie env WIREDRAFT_CODE, w razie braku — losowy.' },
       },
     },
   },
@@ -71,7 +72,7 @@ const tools = [
   },
 ];
 
-const server = new Server({ name: 'wiredraft', version: '0.3.0' }, { capabilities: { tools: {} } });
+const server = new Server({ name: 'wiredraft', version: '0.4.0' }, { capabilities: { tools: {} } });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
 

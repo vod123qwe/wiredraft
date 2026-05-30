@@ -94,6 +94,29 @@ Potem: w Claude Code poproś np. *„zrób makietę ekranu logowania"* → dosta
 dopieszczasz i eksportujesz do Figmy. (Instrukcja jest też w aplikacji: **SHARE → ⚡ Połącz Claude Code (MCP)**.)
 Inny edytor/host można wskazać zmienną `WIREDRAFT_URL`.
 
+### Stały kod projektu = stała przestrzeń
+
+Kod projektu (`WD-XXXXXXXX`) jest jednocześnie **identyfikatorem pokoju Live session (P2P)** — czyli „przestrzeni".
+Domyślnie `create_wireframe` losuje nowy kod przy każdym wywołaniu (każdy link = inny pokój). Żeby wszystkie
+generowane linki trafiały w **ten sam pokój**, ustaw stały kod. Precedencja: argument `code` (per wywołanie) →
+zmienna `WIREDRAFT_CODE` → losowy (fallback).
+
+```json
+{
+  "mcpServers": {
+    "wiredraft": {
+      "command": "npx",
+      "args": ["-y", "github:vod123qwe/wiredraft"],
+      "env": { "WIREDRAFT_CODE": "WD-P8ZOWAVQ" }
+    }
+  }
+}
+```
+
+> Uwaga: WireDraft nie ma backendu. Stały kod **łączy w ten sam pokój Live session**, ale każdy link wciąż niesie
+> własną zawartość (otwarcie `#z=…` zastępuje lokalny stan, potem dołącza do pokoju). Trwałość „po samym kodzie"
+> (bez przenoszenia zawartości w linku) wymaga backendu (np. GitHub Gist) — to kolejny krok z roadmapy.
+
 ## Eksport do Figmy
 
 1. **Copy SVG** → w Figmie <kbd>Ctrl/Cmd</kbd>+<kbd>V</kbd>. Wkleja się jako edytowalne warstwy

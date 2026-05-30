@@ -93,7 +93,8 @@
   .grid-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
   /* canonical ASCII layer */
   #ascii {
-    position: relative;
+    position: absolute;
+    left: 0; top: 0;
     z-index: 1;
     margin: 0;
     color: var(--ink);
@@ -702,14 +703,18 @@ function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); res
 function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); restore(redoStack.pop()); sel.clear(); renderAll(); }
 
 /* ---------- buffer helpers ---------- */
-function makeBuf() {
-  const { cols, rows } = doc.grid;
+/* A buffer is a windowed char grid: cells are addressed in absolute (col,row);
+   the window origin/size live on the array so the same renderers serve both the
+   content-scoped editor buffer and per-object export buffers. */
+function makeBuf(c0 = 0, r0 = 0, cols = doc.grid.cols, rows = doc.grid.rows) {
   const b = new Array(rows);
   for (let r = 0; r < rows; r++) b[r] = new Array(cols).fill(' ');
+  b._c0 = c0; b._r0 = r0; b._cols = cols; b._rows = rows;
   return b;
 }
 function put(b, c, r, ch) {
-  if (r >= 0 && r < doc.grid.rows && c >= 0 && c < doc.grid.cols && ch != null && ch !== '') b[r][c] = ch;
+  const rr = r - b._r0, rc = c - b._c0;
+  if (rr >= 0 && rr < b._rows && rc >= 0 && rc < b._cols && ch != null && ch !== '') b[rr][rc] = ch;
 }
 function writeText(b, c, r, str) { for (let i = 0; i < str.length; i++) put(b, c + i, r, str[i]); }
 
@@ -1085,8 +1090,19 @@ function orderedObjects() {
 }
 
 /* ---------- composite + render ---------- */
+// Bounding box of all (visible) objects, in cells, padded & clamped — so the char
+// buffer only covers content, letting the canvas itself be effectively unbounded.
+function contentBounds(pad = 2) {
+  const objs = orderedObjects();
+  if (!objs.length) return { c0: 0, r0: 0, cols: 1, rows: 1 };
+  let minC = Infinity, minR = Infinity, maxC = -Infinity, maxR = -Infinity;
+  objs.forEach(o => { const b = boundsOf(o); minC = Math.min(minC, b.col); minR = Math.min(minR, b.row); maxC = Math.max(maxC, b.col + b.w); maxR = Math.max(maxR, b.row + b.h); });
+  const c0 = Math.max(0, minC - pad), r0 = Math.max(0, minR - pad);
+  return { c0, r0, cols: Math.max(1, (maxC + pad) - c0), rows: Math.max(1, (maxR + pad) - r0) };
+}
 function buildBuffer() {
-  const b = makeBuf();
+  const bb = contentBounds(2);
+  const b = makeBuf(bb.c0, bb.r0, bb.cols, bb.rows);
   orderedObjects().forEach(o => renderObject(b, o));
   return b;
 }
@@ -1104,23 +1120,23 @@ function render() {
   art.style.backgroundSize = (cellW * 5) + 'px ' + (cellH * 5) + 'px, ' + cellW + 'px ' + cellH + 'px';
   art.style.backgroundPosition = '-0.5px -0.5px, -0.5px -0.5px';
 
-  // ascii
+  // ascii — only the content region (positioned absolutely within the huge artboard)
+  const buf = buildBuffer();
   const pre = $('#ascii');
-  pre.style.width = W + 'px'; pre.style.height = H + 'px';
+  pre.style.left = (buf._c0 * cellW) + 'px';
+  pre.style.top = (buf._r0 * cellH) + 'px';
+  pre.style.height = (buf._rows * cellH) + 'px';
   pre.style.fontSize = (cellH * 0.82).toFixed(2) + 'px';
   pre.style.lineHeight = cellH + 'px';
-  // force each glyph to exactly cellW via letter-spacing tweak handled by monospace + width; use tab-size off
-  pre.textContent = bufferToText(buildBuffer());
-  // adjust horizontal scaling so columns line up with cellW
-  fitMono(pre);
+  pre.textContent = bufferToText(buf);
+  fitMono(pre, buf._cols);
 
   renderOverlay();
   applyView();
 }
 
-/* Measure monospace advance and scale horizontally to match cellW exactly */
-let _measured = null;
-function fitMono(pre) {
+/* Measure monospace advance and scale horizontally so each glyph == cellW */
+function fitMono(pre, cols) {
   const probe = document.createElement('span');
   probe.style.cssText = 'visibility:hidden;position:absolute;white-space:pre;font-family:' + getComputedStyle(pre).fontFamily + ';font-size:' + pre.style.fontSize;
   probe.textContent = 'M'.repeat(50);
@@ -1130,7 +1146,7 @@ function fitMono(pre) {
   const scaleX = cellW / adv;
   pre.style.transformOrigin = '0 0';
   pre.style.transform = 'scaleX(' + scaleX + ')';
-  pre.style.width = (doc.grid.cols * cellW / scaleX) + 'px';
+  pre.style.width = (cols * cellW / scaleX) + 'px';
 }
 
 function renderOverlay() {
@@ -1327,8 +1343,10 @@ function fitGridToViewport() {
   const area = $('#canvasArea');
   const vw = area.clientWidth || window.innerWidth, vh = area.clientHeight || window.innerHeight;
   // huge, pannable workspace (CSS dot grid → cheap at any size): big floor + ~3× viewport
-  const needCols = Math.max(600, Math.ceil(vw / (doc.grid.cellW * view.zoom)) * 3);
-  const needRows = Math.max(280, Math.ceil(vh / (doc.grid.cellH * view.zoom)) * 3);
+  // Figma-like near-infinite canvas. The char buffer is content-scoped, so canvas
+  // size only affects the (cheap) artboard div + CSS dot tiling — keep it big.
+  const needCols = Math.max(2000, Math.ceil(vw / (doc.grid.cellW * view.zoom)) * 3);
+  const needRows = Math.max(1200, Math.ceil(vh / (doc.grid.cellH * view.zoom)) * 3);
   doc.grid.cols = Math.max(doc.grid.cols, needCols);
   doc.grid.rows = Math.max(doc.grid.rows, needRows);
 }
@@ -1916,15 +1934,17 @@ function exportSVG() {
     if (!objs.length) return;
     svg += `<g id="${esc(layer.name)}">\n`;
     objs.forEach(o => {
-      const b = makeBuf(); renderObject(b, o);
+      const ob = boundsOf(o);
+      const b = makeBuf(ob.col, ob.row, ob.w, ob.h); renderObject(b, o);
       const name = o.name || o.label || o.componentType || o.type;
       svg += `<g id="${esc(name)}">`;
-      for (let r = 0; r < doc.grid.rows; r++) {
-        const start = b[r].findIndex(ch2 => ch2 !== ' ');
+      for (let rr = 0; rr < b._rows; rr++) {
+        const start = b[rr].findIndex(ch2 => ch2 !== ' ');
         if (start < 0) continue;
-        const text = b[r].slice(start).join('').replace(/\s+$/,'');
+        const text = b[rr].slice(start).join('').replace(/\s+$/,'');
         if (!text.trim()) continue;
-        svg += `<text x="${start*cw - ox}" y="${r*ch + ch*0.78 - oy}" fill="${ink}" xml:space="preserve">${esc(text)}</text>`;
+        const absC = b._c0 + start, absR = b._r0 + rr;
+        svg += `<text x="${absC*cw - ox}" y="${absR*ch + ch*0.78 - oy}" fill="${ink}" xml:space="preserve">${esc(text)}</text>`;
       }
       svg += `</g>\n`;
     });

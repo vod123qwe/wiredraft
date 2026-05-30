@@ -37,7 +37,7 @@ const WIRE_OBJECT = {
     rows: { type: 'array', items: { type: 'array', items: { type: 'string' } } },
     checked: { type: 'boolean' }, progress: { type: 'number' }, value: { type: 'number' }, maxValue: { type: 'integer' }, activeStep: { type: 'integer' },
     alertType: { type: 'string', enum: ['info', 'warning', 'error', 'success'] },
-    icon: { type: 'string' }, body: { type: 'string' }, listStyle: { type: 'string', enum: ['bullet', 'number', 'dash'] }, zIndex: { type: 'integer' },
+    icon: { type: 'string' }, body: { type: 'string' }, trailing: { type: 'string', description: 'listitem: right-side text/glyph (default ›).' }, listStyle: { type: 'string', enum: ['bullet', 'number', 'dash'] }, zIndex: { type: 'integer' },
   },
 };
 

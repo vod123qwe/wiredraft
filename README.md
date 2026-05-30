@@ -130,7 +130,7 @@ zmienna `WIREDRAFT_CODE` → losowy (fallback).
 Bez kroku budowania. Otwórz `index.html` wprost, albo:
 
 ```bash
-node serve.js   # http://localhost:8794
+node serve.cjs   # http://localhost:8794
 ```
 
 ## Hosting (GitHub Pages)

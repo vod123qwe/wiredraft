@@ -495,20 +495,6 @@
       <div class="section-body"><div id="objList"></div></div>
     </div>
 
-    <div class="section" id="secCanvas">
-      <button class="section-head" data-sec><span class="caret">▾</span> CANVAS</button>
-      <div class="section-body">
-        <div class="row pair">
-          <label class="field"><span class="k">W</span><input type="number" id="gCols" min="10" max="400"></label>
-          <label class="field"><span class="k">H</span><input type="number" id="gRows" min="6" max="300"></label>
-        </div>
-        <div class="lbl-mini">Cell size (px)</div>
-        <div class="row pair">
-          <label class="field"><span class="k">cw</span><input type="number" id="gCW" min="4" max="24"></label>
-          <label class="field"><span class="k">ch</span><input type="number" id="gCH" min="8" max="40"></label>
-        </div>
-      </div>
-    </div>
 
     <div class="section" id="secExport">
       <button class="section-head" data-sec><span class="caret">▾</span> SHARE / EXPORT</button>
@@ -1362,7 +1348,7 @@ function bindSections() {
   document.querySelectorAll('[data-sec]').forEach(h => h.onclick = () => h.parentElement.classList.toggle('collapsed'));
 }
 
-function renderSidebar() { renderPages(); renderChromeGroup(); updateProjCode(); renderProps(); renderObjList(); renderLayers(); syncCanvasFields(); updateNoteBadges(); }
+function renderSidebar() { renderPages(); renderChromeGroup(); updateProjCode(); renderProps(); renderObjList(); renderLayers(); updateNoteBadges(); }
 
 function updateProjCode() { const el = $('#projCode'); if (el) el.textContent = doc.code; }
 function renderPages() {
@@ -1564,10 +1550,6 @@ function renderLayers() {
 }
 function layerLocked(o) { const l = doc.layers.find(x => x.id === (o.layerId || 'default')); return l && l.locked; }
 
-function syncCanvasFields() {
-  $('#gCols').value = doc.grid.cols; $('#gRows').value = doc.grid.rows;
-  $('#gCW').value = doc.grid.cellW; $('#gCH').value = doc.grid.cellH;
-}
 function updateNoteBadges() {
   document.querySelectorAll('.wobj').forEach(el => { const o = objById(el.dataset.id); el.classList.toggle('note', !!(o && o.annotation)); });
 }
@@ -1751,15 +1733,30 @@ function serialize() { commitPage(); return { version: 2, code: doc.code, grid: 
 function exportJSON() { return JSON.stringify(serialize(), null, 2); }
 
 function exportSVG() {
-  const { cols, rows, cellW: cw, cellH: ch } = doc.grid;
-  const W = cols * cw, H = rows * ch;
+  const cw = doc.grid.cellW, ch = doc.grid.cellH;
   const fs = (ch * 0.82).toFixed(1);
   const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const light = document.body.classList.contains('light');
   const bg = light ? '#ffffff' : '#242424', ink = light ? '#1f2228' : '#d6d9de';
+  const annoLines = o => (o.annotation || '').match(/.{1,28}(\s|$)/g) || [o.annotation];
+  const layerVisible = id => { const l = doc.layers.find(x => x.id === (id || 'default')); return !l || l.visible; };
+  const visObjs = doc.objects.filter(o => layerVisible(o.layerId));
+
+  // crop tightly to the mockups (content bounds in px), incl. annotation note boxes
+  const pad = 16; const NOTE_W = 200;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  visObjs.forEach(o => {
+    const b = boundsOf(o);
+    minX = Math.min(minX, b.col * cw); minY = Math.min(minY, b.row * ch);
+    maxX = Math.max(maxX, (b.col + b.w) * cw); maxY = Math.max(maxY, (b.row + b.h) * ch);
+    if (o.annotation) { maxX = Math.max(maxX, (b.col + b.w) * cw + 12 + NOTE_W); maxY = Math.max(maxY, b.row * ch + annoLines(o).length * 14 + 12); }
+  });
+  if (!visObjs.length) { minX = 0; minY = 0; maxX = cw * 10; maxY = ch * 4; }
+  const ox = minX - pad, oy = minY - pad;
+  const W = Math.round(maxX - minX + pad * 2), H = Math.round(maxY - minY + pad * 2);
+
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="monospace" font-size="${fs}">\n`;
   svg += `<rect width="${W}" height="${H}" fill="${bg}"/>\n`;
-  // per layer groups
   doc.layers.forEach(layer => {
     if (!layer.visible) return;
     const objs = doc.objects.filter(o => (o.layerId||'default') === layer.id).sort((a,b)=>(a.zIndex??0)-(b.zIndex??0));
@@ -1769,30 +1766,28 @@ function exportSVG() {
       const b = makeBuf(); renderObject(b, o);
       const name = o.name || o.label || o.componentType || o.type;
       svg += `<g id="${esc(name)}">`;
-      for (let r = 0; r < rows; r++) {
-        const line = b[r].join('').replace(/\s+$/,'');
-        if (!line.trim()) continue;
-        // emit run starting at first non-space
+      for (let r = 0; r < doc.grid.rows; r++) {
         const start = b[r].findIndex(ch2 => ch2 !== ' ');
         if (start < 0) continue;
         const text = b[r].slice(start).join('').replace(/\s+$/,'');
-        svg += `<text x="${start*cw}" y="${r*ch + ch*0.78}" fill="${ink}" xml:space="preserve">${esc(text)}</text>`;
+        if (!text.trim()) continue;
+        svg += `<text x="${start*cw - ox}" y="${r*ch + ch*0.78 - oy}" fill="${ink}" xml:space="preserve">${esc(text)}</text>`;
       }
       svg += `</g>\n`;
     });
     svg += `</g>\n`;
   });
   // annotations layer
-  const noted = doc.objects.filter(o => o.annotation);
+  const noted = visObjs.filter(o => o.annotation);
   if (noted.length) {
     svg += `<g id="annotations">\n`;
-    noted.forEach((o, i) => {
+    noted.forEach((o) => {
       const bb = boundsOf(o);
-      const nx = (bb.col + bb.w) * cw + 12, ny = bb.row * ch;
-      const lines = o.annotation.match(/.{1,28}(\s|$)/g) || [o.annotation];
-      const boxH = lines.length * 14 + 12, boxW = 200;
-      svg += `<line x1="${(bb.col+bb.w)*cw}" y1="${ny+ch}" x2="${nx}" y2="${ny+12}" stroke="#e0a83a" stroke-dasharray="3 3"/>`;
-      svg += `<rect x="${nx}" y="${ny}" width="${boxW}" height="${boxH}" rx="4" fill="#3a2f18" stroke="#e0a83a"/>`;
+      const nx = (bb.col + bb.w) * cw + 12 - ox, ny = bb.row * ch - oy;
+      const lines = annoLines(o);
+      const boxH = lines.length * 14 + 12;
+      svg += `<line x1="${(bb.col+bb.w)*cw - ox}" y1="${ny+ch}" x2="${nx}" y2="${ny+12}" stroke="#e0a83a" stroke-dasharray="3 3"/>`;
+      svg += `<rect x="${nx}" y="${ny}" width="${NOTE_W}" height="${boxH}" rx="4" fill="#3a2f18" stroke="#e0a83a"/>`;
       lines.forEach((ln, li) => { svg += `<text x="${nx+8}" y="${ny+16+li*14}" fill="#f0d79a" font-family="sans-serif" font-size="11">${esc(ln.trim())}</text>`; });
     });
     svg += `</g>\n`;
@@ -1895,14 +1890,6 @@ function zoomToFit() {
 }
 $('#zoomFit').onclick = zoomToFit;
 
-['gCols','gRows','gCW','gCH'].forEach(id => $('#'+id).addEventListener('change', () => {
-  pushHistory();
-  doc.grid.cols = Math.max(10, +$('#gCols').value || 80);
-  doc.grid.rows = Math.max(6, +$('#gRows').value || 30);
-  doc.grid.cellW = Math.max(4, +$('#gCW').value || 9);
-  doc.grid.cellH = Math.max(8, +$('#gCH').value || 17);
-  render();
-}));
 $('#addLayer').onclick = () => { pushHistory(); doc.layers.push({ id:uid(), name:'Layer '+(doc.layers.length+1), visible:true }); renderSidebar(); };
 $('#addPage').onclick = addPage;
 $('#modeSel').onchange = (e) => setMode(e.target.value);

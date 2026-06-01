@@ -402,6 +402,27 @@
     font: 11px/1.5 ui-monospace, monospace; padding: 10px; outline: none; resize: vertical;
   }
   .modal .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+  /* projects dashboard */
+  .dash-modal { width: 720px; max-width: 94vw; }
+  .dash-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .dash-head h3 { margin: 0; }
+  .dash-head-actions { display: flex; gap: 8px; align-items: center; }
+  .dash-head .btn { width: auto; padding: 7px 12px; }
+  .dash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-height: 60vh; overflow-y: auto; }
+  .dash-card { position: relative; background: var(--workspace); border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line); padding: 12px; cursor: pointer; transition: box-shadow .12s, background .12s; }
+  .dash-card:hover { background: var(--fill-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+  .dash-card .dc-icon { font-family: ui-monospace, monospace; font-size: 22px; color: var(--text-dim); }
+  .dash-card .dc-name { color: var(--text); font-weight: 600; margin-top: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dash-card .dc-meta { color: var(--text-mute); font-size: 10px; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .dash-card.active { box-shadow: inset 0 0 0 1.5px var(--accent); }
+  .dash-card .dc-acts { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; opacity: 0; }
+  .dash-card:hover .dc-acts { opacity: 1; }
+  .dash-card .dc-acts button { width: 22px; height: 22px; border: none; border-radius: 5px; background: var(--sidebar); color: var(--text-mute); cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); font-size: 12px; }
+  .dash-card .dc-acts button:hover { color: var(--text); }
+  .dash-card .dc-acts .dc-del:hover { color: #ff6b81; }
+  .dash-empty { grid-column: 1/-1; color: var(--text-mute); font-size: 11px; text-align: center; padding: 30px 0; }
+  .dash-foot { color: var(--text-mute); font-size: 10px; margin-top: 12px; }
+  @media (max-width: 640px) { .dash-grid { grid-template-columns: 1fr 1fr; } }
   .modal .btn { width: auto; padding: 8px 16px; }
   .mcp-modal { width: 560px; }
   .mcp-step { color: var(--text); font-size: 12px; line-height: 1.5; margin: 12px 0 6px; }
@@ -555,6 +576,7 @@
 <!-- floating top controls -->
 <div class="topbar">
   <div class="tb-left">
+    <button class="pill pill-icon" id="dashBtn" title="Projekty (dashboard)">▦</button>
     <div class="tb-tabs" id="pageTabs"></div>
     <button class="ptab-add" id="addPage" title="Nowa strona">+</button>
     <select id="modeSel" class="mode-sel" title="Tryb projektowania">
@@ -606,6 +628,18 @@
 <div class="icon-pop" id="iconPop">
   <div class="icon-pop-head"><span>Ikona</span><button id="iconClear" class="ic-clear">∅ brak</button></div>
   <div id="iconGrid"></div>
+</div>
+
+<!-- projects dashboard -->
+<div class="modal-back" id="dashModal">
+  <div class="modal dash-modal">
+    <div class="dash-head">
+      <h3>Projekty</h3>
+      <div class="dash-head-actions"><button class="btn" id="dashNew">+ Nowy projekt</button><button class="btn ghost" id="dashCloseX" title="Zamknij">×</button></div>
+    </div>
+    <div id="dashList" class="dash-grid"></div>
+    <div class="dash-foot">Projekty zapisują się lokalnie w tej przeglądarce. Otwórz link (#g=/#z=) → też tu trafi.</div>
+  </div>
 </div>
 
 <!-- import modal -->
@@ -1213,7 +1247,7 @@ function updateStatus() {
   const ss = $('#stSel'); if (ss) ss.textContent = sel.size ? ' · ' + sel.size + ' selected' : '';
 }
 
-function renderAll() { render(); renderSidebar(); updateStatus(); if (typeof room !== 'undefined' && room && !applyingRemote) scheduleBroadcast(); if (typeof renderPeers === 'function') renderPeers(); }
+function renderAll() { render(); renderSidebar(); updateStatus(); if (typeof room !== 'undefined' && room && !applyingRemote) scheduleBroadcast(); if (typeof renderPeers === 'function') renderPeers(); if (typeof scheduleAutosave === 'function' && !(typeof applyingRemote !== 'undefined' && applyingRemote)) scheduleAutosave(); }
 
 /* ============================================================
    Sidebar
@@ -1962,7 +1996,7 @@ function pasteClip() {
 /* ============================================================
    Export / Import
    ============================================================ */
-function serialize() { commitPage(); return { version: 2, code: doc.code, grid: doc.grid, pages: doc.pages, activePage: doc.activePage }; }
+function serialize() { commitPage(); return { version: 2, code: doc.code, title: doc.title, grid: doc.grid, pages: doc.pages, activePage: doc.activePage }; }
 function exportJSON() { return JSON.stringify(serialize(), null, 2); }
 
 function exportSVG() {
@@ -2139,6 +2173,58 @@ $('#zoomFit').onclick = zoomToFit;
 $('#addLayer').onclick = () => { pushHistory(); doc.layers.push({ id:uid(), name:'Layer '+(doc.layers.length+1), visible:true }); renderSidebar(); };
 $('#addPage').onclick = addPage;
 $('#modeSel').onchange = (e) => setMode(e.target.value);
+
+/* ---- projects dashboard (localStorage) ---- */
+const PROJ_KEY = 'wd-projects';
+function loadProjects() { try { return JSON.parse(localStorage.getItem(PROJ_KEY) || '{}'); } catch (e) { return {}; } }
+function saveProjects(p) { try { localStorage.setItem(PROJ_KEY, JSON.stringify(p)); } catch (e) {} }
+function projectName(s) { return (s.title && s.title.trim()) || (s.pages[0] && s.pages[0].name) || s.code; }
+function saveCurrentProject() {
+  if (!doc.pages || !doc.pages.some(p => (p.objects || []).length)) return; // skip empty
+  const p = loadProjects(); const s = serialize();
+  p[s.code] = { code: s.code, name: projectName(s), pages: s.pages.length, objs: s.pages.reduce((n, pg) => n + (pg.objects || []).length, 0), updatedAt: Date.now(), doc: s };
+  saveProjects(p);
+}
+let _autosaveT;
+function scheduleAutosave() { clearTimeout(_autosaveT); _autosaveT = setTimeout(saveCurrentProject, 600); }
+function renderDashboard() {
+  const list = $('#dashList'); const arr = Object.values(loadProjects()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  if (!arr.length) { list.innerHTML = '<div class="dash-empty">Brak zapisanych projektów. Twórz makiety — zapiszą się tu automatycznie.</div>'; return; }
+  list.innerHTML = '';
+  arr.forEach(e => {
+    const card = document.createElement('div');
+    card.className = 'dash-card' + (e.code === doc.code ? ' active' : '');
+    let when = ''; try { when = e.updatedAt ? new Date(e.updatedAt).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' }) : ''; } catch (er) {}
+    card.innerHTML = '<div class="dc-acts"><button class="dc-dup" title="Duplikuj">⧉</button><button class="dc-del" title="Usuń">×</button></div>'
+      + '<div class="dc-icon">▤</div><div class="dc-name">' + escAttr(e.name || e.code) + '</div>'
+      + '<div class="dc-meta">' + e.code + ' · ' + (e.pages || 1) + ' str. · ' + (e.objs || 0) + ' obj.' + (when ? ' · ' + when : '') + '</div>';
+    card.onclick = (ev) => { if (ev.target.closest('.dc-acts')) return; openProject(e.code); };
+    card.querySelector('.dc-dup').onclick = (ev) => { ev.stopPropagation(); duplicateProject(e.code); };
+    card.querySelector('.dc-del').onclick = (ev) => { ev.stopPropagation(); if (confirm('Usunąć „' + (e.name || e.code) + '" z dashboardu?')) { const pp = loadProjects(); delete pp[e.code]; saveProjects(pp); renderDashboard(); } };
+    list.appendChild(card);
+  });
+}
+function openDashboard() { saveCurrentProject(); renderDashboard(); $('#dashModal').classList.add('open'); }
+function openProject(code) {
+  const e = loadProjects()[code]; if (!e) return;
+  saveCurrentProject(); collapsedLayers.clear(); collapsedGroups.clear();
+  loadDoc(e.doc); $('#dashModal').classList.remove('open'); toast('Otwarto: ' + (e.name || code));
+}
+function duplicateProject(code) {
+  const p = loadProjects(); const e = p[code]; if (!e) return;
+  const copy = JSON.parse(JSON.stringify(e.doc)); copy.code = genCode(); copy.title = (e.name || 'Projekt') + ' (kopia)';
+  p[copy.code] = { code: copy.code, name: copy.title, pages: copy.pages.length, objs: e.objs || 0, updatedAt: Date.now(), doc: copy };
+  saveProjects(p); renderDashboard();
+}
+function newProject() {
+  saveCurrentProject(); collapsedLayers.clear(); collapsedGroups.clear();
+  doc = defaultDoc(); sel.clear(); fitGridToViewport(); renderAll();
+  $('#dashModal').classList.remove('open'); toast('Nowy projekt: ' + doc.code);
+}
+$('#dashBtn').onclick = openDashboard;
+$('#dashNew').onclick = newProject;
+$('#dashCloseX').onclick = () => $('#dashModal').classList.remove('open');
+$('#dashModal').onclick = (e) => { if (e.target.id === 'dashModal') $('#dashModal').classList.remove('open'); };
 
 /* theme (light / dark) — toggled under the (?) popover, persisted */
 function applyTheme(t) {

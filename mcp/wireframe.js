@@ -141,8 +141,14 @@ function renderComponent(b, grid, o, c, r, w, h) {
     }
     case 'tabbar': {
       drawBoxFrame(b, grid, c, r, w, h, bs, 'solid');
-      const tabs = o.items || ['Home', 'Search', 'Profile']; const inner = w - 2, seg = Math.max(1, Math.floor(inner / tabs.length));
-      tabs.forEach((t, i) => { const txt = t.slice(0, seg - 1); const pad = Math.max(0, Math.floor((seg - txt.length) / 2)); writeText(b, grid, c + 1 + i * seg + pad, r + Math.floor(h / 2), txt); });
+      const tabs = o.items || ['Home', 'Search', 'Profile']; const icons = o.icons || [];
+      const inner = w - 2, seg = Math.max(1, Math.floor(inner / tabs.length));
+      const twoRow = h >= 4 && icons.some(Boolean);
+      tabs.forEach((t, i) => {
+        const cell = c + 1 + i * seg, txt = t.slice(0, seg - 1), pad = Math.max(0, Math.floor((seg - txt.length) / 2));
+        if (twoRow) { const ic = icons[i] || ''; if (ic) writeText(b, grid, cell + Math.max(0, Math.floor((seg - 1) / 2)), r + 1, ic); writeText(b, grid, cell + pad, r + h - 2, txt); }
+        else writeText(b, grid, cell + pad, r + Math.floor(h / 2), txt);
+      });
       return;
     }
     case 'segmented': {

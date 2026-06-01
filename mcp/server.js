@@ -31,6 +31,7 @@ const WIRE_OBJECT = {
     fromId: { type: 'string', description: 'connector: source object id.' },
     toId: { type: 'string', description: 'connector: target object id.' },
     items: { type: 'array', items: { type: 'string' } },
+    icons: { type: 'array', items: { type: 'string' }, description: 'tabbar: per-item icon shown above each label (aligned to items by index).' },
     navItems: { type: 'array', items: { type: 'string' } },
     tabs: { type: 'array', items: { type: 'string' } },
     columns: { type: 'array', items: { type: 'string' } },

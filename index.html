@@ -227,6 +227,8 @@
   .re-row { display: flex; gap: 3px; align-items: center; }
   .re-cell { padding: 4px 6px; }
   .re-del { width: 22px; height: 25px; font-size: 13px; }
+  .tb-iconpick { flex: 0 0 auto; width: 30px; height: 27px; background: transparent; border: none; border-radius: 5px; box-shadow: inset 0 0 0 1px var(--line); color: var(--text); cursor: pointer; font-family: ui-monospace, monospace; font-size: 13px; }
+  .tb-iconpick:hover { background: var(--fill-soft); box-shadow: inset 0 0 0 1px var(--accent); }
 
   /* palette grid */
   .palette { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; }
@@ -930,9 +932,18 @@ function renderComponent(b, o, c, r, w, h) {
     }
     case 'tabbar': {
       drawBoxFrame(b, c, r, w, h, bs, 'solid');
-      const tabs = o.items || ['Home', 'Search', 'Profile'];
+      const tabs = o.items || ['Home', 'Search', 'Profile']; const icons = o.icons || [];
       const inner = w - 2, seg = Math.max(1, Math.floor(inner / tabs.length));
-      tabs.forEach((t, i) => { const txt = t.slice(0, seg - 1); const pad = Math.max(0, Math.floor((seg - txt.length) / 2)); writeText(b, c + 1 + i * seg + pad, r + Math.floor(h / 2), txt); });
+      const twoRow = h >= 4 && icons.some(Boolean); // icon row above + label row when there's room + icons
+      tabs.forEach((t, i) => {
+        const cell = c + 1 + i * seg, txt = t.slice(0, seg - 1), pad = Math.max(0, Math.floor((seg - txt.length) / 2));
+        if (twoRow) {
+          const ic = icons[i] || ''; if (ic) writeText(b, cell + Math.max(0, Math.floor((seg - 1) / 2)), r + 1, ic);
+          writeText(b, cell + pad, r + h - 2, txt);
+        } else {
+          writeText(b, cell + pad, r + Math.floor(h / 2), txt);
+        }
+      });
       return;
     }
     case 'segmented': {
@@ -1465,7 +1476,7 @@ function compDefaults(t) {
     case 'skeleton': return { w:24, h:1, extra:{} };
     case 'statusbar': return { w:42, h:1, extra:{ label:'9:41', body:'▮▮▮ 100%' } };
     case 'iosnav': return { w:42, h:3, extra:{ label:'Title', items:['Back',''] } };
-    case 'tabbar': return { w:42, h:3, extra:{ items:['Home','Search','Profile'] } };
+    case 'tabbar': return { w:42, h:4, extra:{ items:['Home','Search','Profile'], icons:['⌂','⌕','☻'] } };
     case 'segmented': return { w:30, h:3, extra:{ items:['Day','Week','Month'], activeStep:0 } };
     case 'iosswitch': return { w:16, h:1, extra:{ label:'Wi-Fi', checked:true } };
     case 'searchbar': return { w:30, h:3, extra:{ label:'Search' } };
@@ -1527,7 +1538,7 @@ function insertFrame() {
     if (ch === 'statusbar') objs.push(mkComp('statusbar', pos.col + 1, pos.row + 1, M.w - 2, 1, { label: '9:41', body: '▮▮▮ 100%' }, gid));
     if (ch === 'iosnav') objs.push(mkComp('iosnav', pos.col + 1, pos.row + 2, M.w - 2, 3, { label: 'Title', items: ['Back', ''] }, gid));
     if (ch === 'appbar') objs.push(mkComp('appbar', pos.col + 1, pos.row + 2, M.w - 2, 3, { label: 'Title', icon: '≡', items: ['⋯'] }, gid));
-    if (ch === 'tabbar') objs.push(mkComp('tabbar', pos.col + 1, pos.row + M.h - 4, M.w - 2, 3, { items: ['Home', 'Search', 'Profile'] }, gid));
+    if (ch === 'tabbar') objs.push(mkComp('tabbar', pos.col + 1, pos.row + M.h - 5, M.w - 2, 4, { items: ['Home', 'Search', 'Profile'], icons: ['⌂', '⌕', '☻'] }, gid));
     if (ch === 'bottomnav') objs.push(mkComp('tabbar', pos.col + 1, pos.row + M.h - 2, M.w - 2, 1, { items: ['Home', 'Search', 'Me'] }, gid));
     if (ch === 'homeindicator') objs.push(mkComp('homeindicator', pos.col + 1, pos.row + M.h - 1, M.w - 2, 1, {}, gid));
   });
@@ -1601,6 +1612,12 @@ function itemsEditorHtml(key, label, items) {
   const rows = (items || []).map((it, i) => `<div class="ie-row"><input class="ie-inp" data-i="${i}" value="${escAttr(it)}"><button class="ie-del" type="button" data-i="${i}" title="Usuń">×</button></div>`).join('');
   return `<div class="lbl-mini">${label}</div><div class="items-ed" data-itemsed="${key}">${rows}<button class="ie-add" type="button">+ Dodaj</button></div>`;
 }
+/* tab bar editor: icon (over) + label per item */
+function tabbarEditorHtml(o) {
+  const items = o.items || []; const icons = o.icons || [];
+  const rows = items.map((it, i) => `<div class="ie-row"><button class="tb-iconpick" type="button" data-i="${i}" title="Ikona nad etykietą">${escAttr(icons[i] || '◇')}</button><input class="ie-inp tb-lbl" data-i="${i}" value="${escAttr(it)}"><button class="ie-del" type="button" data-i="${i}" title="Usuń">×</button></div>`).join('');
+  return `<div class="lbl-mini">Pozycje (ikona + etykieta)</div><div class="items-ed" data-tabbared>${rows}<button class="ie-add" type="button">+ Dodaj</button></div>`;
+}
 /* table editor: columns (items) + a cell grid with add/remove rows */
 function tableEditorHtml(o) {
   const cols = o.columns || ['Col 1', 'Col 2']; const rows = o.rows || [];
@@ -1628,7 +1645,7 @@ const ICON_CATS = {
   Math: ['×','÷','±','≠','≤','≥','∞','∑','√','π','%','∆'],
   Misc: ['⊚','°','†','‡','…','※','✳','❖','♦','☼'],
 };
-let iconTarget = null;
+let iconSetter = null;
 function buildIconPicker() {
   const grid = $('#iconGrid'); if (!grid) return; grid.innerHTML = '';
   Object.entries(ICON_CATS).forEach(([cat, glyphs]) => {
@@ -1638,15 +1655,15 @@ function buildIconPicker() {
     grid.appendChild(row);
   });
 }
-function openIconPicker(o, anchorEl) {
-  iconTarget = o;
+function openIconPicker(anchorEl, setter) {
+  iconSetter = setter;
   const pop = $('#iconPop'); const r = anchorEl.getBoundingClientRect();
   pop.style.top = Math.max(12, Math.min(window.innerHeight - 360, r.top - 4)) + 'px';
   pop.classList.add('open');
 }
 function pickIcon(g) {
-  if (!iconTarget) return; pushHistory();
-  if (g) iconTarget.icon = g; else delete iconTarget.icon;
+  if (!iconSetter) return; pushHistory();
+  iconSetter(g || '');
   $('#iconPop').classList.remove('open'); renderAll();
 }
 
@@ -1686,7 +1703,8 @@ function renderProps() {
     if (['checkbox','radio','toggle','iosswitch','accordion'].includes(ct)) html += '<div class="lbl-mini">State</div><div class="seg" data-seg="checked" style="grid-template-columns:1fr 1fr"><button data-val="true" class="' + (o.checked !== false ? 'on' : '') + '">On</button><button data-val="false" class="' + (o.checked === false ? 'on' : '') + '">Off</button></div>';
     if (ct === 'navbar') html += itemsEditorHtml('navItems', 'Items', o.navItems);
     if (ct === 'tabs') html += itemsEditorHtml('tabs', 'Tabs', o.tabs);
-    if (['list','breadcrumb','stepper','tabbar','segmented','menu','grouplist','chartbar','appbar','chipgroup'].includes(ct)) html += itemsEditorHtml('items', ct === 'appbar' ? 'Akcje' : ct === 'chartbar' ? 'Wartości' : 'Items', o.items);
+    if (['list','breadcrumb','stepper','segmented','menu','grouplist','chartbar','appbar','chipgroup'].includes(ct)) html += itemsEditorHtml('items', ct === 'appbar' ? 'Akcje' : ct === 'chartbar' ? 'Wartości' : 'Items', o.items);
+    if (ct === 'tabbar') html += tabbarEditorHtml(o);
     if (ct === 'iosnav') html += itemsEditorHtml('items', 'Back / Right', o.items);
     if (ct === 'table') html += tableEditorHtml(o);
     if (ct === 'listitem') html += '<div class="lbl-mini">Trailing (prawa)</div>' + fld('trailing','»', o.trailing || '');
@@ -1746,7 +1764,14 @@ function bindProps(o) {
       renderAll();
     });
   });
-  $('#propsBody').querySelectorAll('[data-iconpick]').forEach(btn => { btn.onclick = (e) => { e.preventDefault(); openIconPicker(o, btn); }; });
+  $('#propsBody').querySelectorAll('[data-iconpick]').forEach(btn => { btn.onclick = (e) => { e.preventDefault(); openIconPicker(btn, (g) => { if (g) o.icon = g; else delete o.icon; }); }; });
+  // tabbar editor: per-item icon + label
+  $('#propsBody').querySelectorAll('[data-tabbared]').forEach(box => {
+    box.querySelectorAll('.tb-lbl').forEach(inp => inp.addEventListener('input', () => { o.items = o.items || []; o.items[+inp.dataset.i] = inp.value; render(); }));
+    box.querySelectorAll('.tb-iconpick').forEach(btn => btn.onclick = (e) => { e.preventDefault(); const i = +btn.dataset.i; openIconPicker(btn, (g) => { o.icons = o.icons || []; o.icons[i] = g || ''; }); });
+    box.querySelectorAll('.ie-del').forEach(btn => btn.onclick = () => { const i = +btn.dataset.i; pushHistory(); (o.items || []).splice(i, 1); if (o.icons) o.icons.splice(i, 1); renderAll(); });
+    const add = box.querySelector('.ie-add'); if (add) add.onclick = () => { pushHistory(); (o.items || (o.items = [])).push('Tab'); (o.icons || (o.icons = [])).push(''); renderAll(); };
+  });
 
   // items editors (lists / tabs / nav / columns…): edit copy live, add / remove rebuild
   $('#propsBody').querySelectorAll('[data-itemsed]').forEach(box => {

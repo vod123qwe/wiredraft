@@ -23,7 +23,7 @@ const WIRE_OBJECT = {
     height: { type: 'integer' },
     label: { type: 'string', description: 'Centered label (box/button/etc). \\n for multiline.' },
     content: { type: 'string', description: 'Text content for type="text".' },
-    componentType: { type: 'string', enum: ['button','input','select','checkbox','radio','toggle','navbar','tabs','card','modal','list','table','image','alert','avatar','progress','divider','breadcrumb','browser','icon','stepper','rating','skeleton','statusbar','iosnav','tabbar','segmented','iosswitch','searchbar','homeindicator','heading','link','badge','chip','kbd','slider','numstep','pagination','accordion','menu','snackbar','fab','spinner','statcard','chartbar','video','grouplist','pagecontrol','listitem','appbar','bottomsheet','banner','textarea','datefield','otp','chipgroup','carousel','emptystate','map'] },
+    componentType: { type: 'string', enum: ['button','input','select','checkbox','radio','toggle','navbar','tabs','card','modal','list','table','image','alert','avatar','progress','divider','breadcrumb','browser','icon','stepper','rating','skeleton','statusbar','iosnav','tabbar','segmented','iosswitch','searchbar','homeindicator','heading','link','badge','chip','kbd','slider','numstep','pagination','accordion','menu','snackbar','fab','spinner','statcard','chartbar','video','grouplist','pagecontrol','listitem','appbar','bottomsheet','banner','textarea','datefield','otp','chipgroup','carousel','emptystate','map','keyboard'] },
     borderStyle: { type: 'string', enum: ['single', 'double', 'rounded', 'heavy'] },
     fill: { type: 'string', enum: ['transparent', 'solid'] },
     annotation: { type: 'string', description: 'Design note → exported to Figma as an annotation/sticky.' },

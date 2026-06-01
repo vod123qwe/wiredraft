@@ -1069,6 +1069,12 @@ function renderComponent(b, o, c, r, w, h) {
       drawCenteredLabel(b, c, r, w, h, '⌖ ' + (lab || 'Map'));
       return;
     }
+    case 'keyboard': {
+      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      const rows = ['q w e r t y u i o p', 'a s d f g h j k l', '⇧  z x c v b n m  ⌫', '123      space      ⏎'];
+      for (let i = 0; i < rows.length && r + 1 + i < r + h - 1; i++) { const t = rows[i].slice(0, w - 2); writeText(b, c + 1 + centerPad(w - 2, t.length), r + 1 + i, t); }
+      return;
+    }
     default:
       drawBoxFrame(b, c, r, w, h, bs, 'solid');
       drawCenteredLabel(b, c, r, w, h, lab || ct);
@@ -1341,13 +1347,13 @@ const GROUPS = {
 // flat glyph lookup for the object list
 const GLY = {};
 Object.values(GROUPS).flat().forEach(i => { if (i.t !== 'pointer') GLY[i.t] = i.gly; });
-Object.assign(GLY, { statusbar:'▭', iosnav:'‹', tabbar:'⊞', segmented:'▢', iosswitch:'◉', searchbar:'⌕', homeindicator:'▬', grouplist:'☰', pagecontrol:'●', browser:'⊡' });
+Object.assign(GLY, { statusbar:'▭', iosnav:'‹', tabbar:'⊞', segmented:'▢', iosswitch:'◉', searchbar:'⌕', homeindicator:'▬', grouplist:'☰', pagecontrol:'●', browser:'⊡', keyboard:'⌨' });
 
 /* platform chrome group — contents depend on the active page's design mode */
 const CHROME = {
   desktop: [{ t:'__frame', gly:'▭', nm:'Frame' }, { t:'browser', gly:'⊡', nm:'Browser' }, { t:'navbar', gly:'≡', nm:'Top nav' }, { t:'searchbar', gly:'⌕', nm:'Search' }],
-  mobile:  [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'appbar', gly:'⊤', nm:'App bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'listitem', gly:'≣', nm:'List item' }, { t:'bottomsheet', gly:'⊔', nm:'Sheet' }, { t:'fab', gly:'⊕', nm:'FAB' }, { t:'banner', gly:'◳', nm:'Banner' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
-  ios:     [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'iosnav', gly:'‹', nm:'Nav bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'iosswitch', gly:'◉', nm:'Switch' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'listitem', gly:'≣', nm:'List item' }, { t:'bottomsheet', gly:'⊔', nm:'Sheet' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
+  mobile:  [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'appbar', gly:'⊤', nm:'App bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'listitem', gly:'≣', nm:'List item' }, { t:'bottomsheet', gly:'⊔', nm:'Sheet' }, { t:'fab', gly:'⊕', nm:'FAB' }, { t:'banner', gly:'◳', nm:'Banner' }, { t:'keyboard', gly:'⌨', nm:'Keyboard' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
+  ios:     [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'iosnav', gly:'‹', nm:'Nav bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'iosswitch', gly:'◉', nm:'Switch' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'listitem', gly:'≣', nm:'List item' }, { t:'bottomsheet', gly:'⊔', nm:'Sheet' }, { t:'keyboard', gly:'⌨', nm:'Keyboard' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
 };
 function renderChromeGroup() {
   const m = currentMode();
@@ -1510,6 +1516,7 @@ function compDefaults(t) {
     case 'carousel': return { w:40, h:12, extra:{ icon:'⊠', maxValue:3, activeStep:0 } };
     case 'emptystate': return { w:34, h:7, extra:{ label:'Brak elementów', body:'Dodaj pierwszy', icon:'∅' } };
     case 'map': return { w:40, h:12, extra:{ label:'Map' } };
+    case 'keyboard': return { w:42, h:6, extra:{} };
     default: return { w:20, h:5, extra:{ label:t } };
   }
 }
@@ -1696,7 +1703,7 @@ function renderProps() {
   if (o.type === 'text') html += '<div class="lbl-mini">Content</div><label class="field"><textarea class="note-input" data-prop="content">'+(o.content||'')+'</textarea></label>';
   if (o.type === 'component') {
     const ct = o.componentType;
-    const BORDERED = ['button','input','select','navbar','tabs','card','modal','alert','table','browser','progress','image','avatar','iosnav','tabbar','segmented','searchbar','appbar','bottomsheet','banner','textarea','datefield','carousel','map','video','kbd'];
+    const BORDERED = ['button','input','select','navbar','tabs','card','modal','alert','table','browser','progress','image','avatar','iosnav','tabbar','segmented','searchbar','appbar','bottomsheet','banner','textarea','datefield','carousel','map','video','kbd','keyboard'];
     const ICONABLE = ['icon','image','button','input','select','fab','listitem','appbar','banner','carousel','emptystate','map'];
     html += variantHtml(ct, o.variant);
     if (['input','select','textarea','datefield'].includes(ct) && o.variant === 'labeled') html += '<div class="lbl-mini">Label nad polem</div>' + fld('fieldLabel','L', o.fieldLabel || '');

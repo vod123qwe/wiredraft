@@ -189,6 +189,7 @@ function renderComponent(b, grid, o, c, r, w, h) {
     case 'carousel': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, grid, c, r, w, h - 1, o.icon || '⊠'); const n = o.maxValue || 3, act = o.activeStep || 0; let dots = ''; for (let i = 0; i < n; i++) dots += (i === act ? '● ' : '○ '); dots = dots.trim(); writeText(b, grid, c + centerPad(w, dots.length), r + h - 2, dots); return; }
     case 'emptystate': { const midR = r + Math.floor(h / 2); put(b, grid, c + Math.floor((w - 1) / 2), midR - 1, o.icon || '∅'); const title = lab || 'Nothing here'; writeText(b, grid, c + centerPad(w, title.length), midR, title.slice(0, w)); if (o.body) writeText(b, grid, c + centerPad(w, o.body.length), midR + 1, o.body.slice(0, w)); return; }
     case 'map': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); for (let rr = r + 1; rr < r + h - 1; rr += 2) for (let cc = c + 1; cc < c + w - 1; cc += 4) put(b, grid, cc, rr, '·'); drawCenteredLabel(b, grid, c, r, w, h, '⌖ ' + (lab || 'Map')); return; }
+    case 'keyboard': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const kr = ['q w e r t y u i o p', 'a s d f g h j k l', '⇧  z x c v b n m  ⌫', '123      space      ⏎']; for (let i = 0; i < kr.length && r + 1 + i < r + h - 1; i++) { const t = kr[i].slice(0, w - 2); writeText(b, grid, c + 1 + centerPad(w - 2, t.length), r + 1 + i, t); } return; }
     default: drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, grid, c, r, w, h, lab || ct);
   }
 }

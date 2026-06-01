@@ -99,6 +99,16 @@ krótki link `…/#g=<id>` (~70 znaków) zamiast długiego `#z=`. Wymaga tokenu 
 (zero regresji). Wymuszenie długiego linku: argument `inline: true`. (Gist jest „secret" — niepubliczny, ale
 dostępny po znajomości linku.)
 
+### Dashboard projektów (▦)
+
+Przycisk **▦** (lewy górny róg) otwiera dashboard z kafelkami projektów. Dwa źródła:
+- **💾 Lokalne** — auto-zapis w `localStorage` tej przeglądarki.
+- **☁ Chmura** — Twoje projekty w GitHub Gist, **widoczne na każdym urządzeniu**. Wklej token GitHub
+  (uprawnienie **Gist: read & write**, najlepiej fine-grained) → „Połącz". Token zostaje **tylko w Twojej
+  przeglądarce** (localStorage). „↑ Zapisz bieżący w chmurze" tworzy/aktualizuje gist `WireDraft <code>`;
+  projekty już w chmurze auto-synchronizują się przy edycji. **Makiety generowane przez MCP też się tu pojawiają**
+  (te same gisty).
+
 **Update w tym samym widoku (stały link).** Ustaw `WIREDRAFT_CODE` (env) — wtedy każde kolejne
 `create_wireframe` **odnajduje i nadpisuje ten sam gist** dla tego kodu i zwraca **identyczny link** (zamiast
 nowego). Prosisz Claude o zmianę → ten sam link, zaktualizowana zawartość; w otwartej karcie wystarczy **F5**.

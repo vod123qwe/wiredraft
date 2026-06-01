@@ -99,6 +99,17 @@ krótki link `…/#g=<id>` (~70 znaków) zamiast długiego `#z=`. Wymaga tokenu 
 (zero regresji). Wymuszenie długiego linku: argument `inline: true`. (Gist jest „secret" — niepubliczny, ale
 dostępny po znajomości linku.)
 
+**Update w tym samym widoku (stały link).** Ustaw `WIREDRAFT_CODE` (env) — wtedy każde kolejne
+`create_wireframe` **odnajduje i nadpisuje ten sam gist** dla tego kodu i zwraca **identyczny link** (zamiast
+nowego). Prosisz Claude o zmianę → ten sam link, zaktualizowana zawartość; w otwartej karcie wystarczy **F5**.
+
+```json
+{ "mcpServers": { "wiredraft": {
+  "command": "npx", "args": ["-y", "github:vod123qwe/wiredraft"],
+  "env": { "WIREDRAFT_CODE": "WD-MOJPROJEKT" }
+} } }
+```
+
 Potem: w Claude Code poproś np. *„zrób makietę ekranu logowania"* → dostaniesz link, otwierasz go w WireDraft,
 dopieszczasz i eksportujesz do Figmy. (Instrukcja jest też w aplikacji: **SHARE → ⚡ Połącz Claude Code (MCP)**.)
 Inny edytor/host można wskazać zmienną `WIREDRAFT_URL`.

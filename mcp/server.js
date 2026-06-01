@@ -73,7 +73,7 @@ const tools = [
   },
 ];
 
-const server = new Server({ name: 'wiredraft', version: '0.5.0' }, { capabilities: { tools: {} } });
+const server = new Server({ name: 'wiredraft', version: '0.6.0' }, { capabilities: { tools: {} } });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
 
@@ -84,11 +84,17 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       const doc = makeDoc(args);
       // Prefer a short link (project stored in a secret Gist) → …/#g=<id>; fall back to
       // the self-contained #z= link if no token / offline. Pass inline:true to force #z=.
+      // With a fixed code, reuse the same gist (same link) and just update its content.
+      const fixedCode = !!(args.code || process.env.WIREDRAFT_CODE);
       let url, kind = 'inline (self-contained)';
-      if (args.inline !== true) { const s = await shortLinkViaGist(doc, BASE_URL); if (s) { url = s; kind = 'short (gist)'; } }
+      if (args.inline !== true) {
+        const s = await shortLinkViaGist(doc, BASE_URL, fixedCode);
+        if (s) { url = s.url; kind = s.updated ? 'short (gist, UPDATED same link)' : 'short (gist, new)'; }
+      }
       if (!url) url = encodeUrl(doc, BASE_URL);
+      const hint = fixedCode ? '' : '\n(Ustaw env WIREDRAFT_CODE, aby kolejne update\'y trafiały w TEN SAM link — wtedy odśwież kartę (F5).)';
       const previews = doc.pages.map(p => `── ${p.name} ──\n${renderAscii(p, doc.grid) || '(empty)'}`).join('\n\n');
-      const text = `Open in WireDraft (editable):\n${url}\n\nLink: ${kind} · project code: ${doc.code} · pages: ${doc.pages.length}\n\nPreview:\n${previews}`;
+      const text = `Open in WireDraft (editable):\n${url}\n\nLink: ${kind} · project code: ${doc.code} · pages: ${doc.pages.length}${hint}\n\nPreview:\n${previews}`;
       return { content: [{ type: 'text', text }] };
     }
     if (name === 'render_wireframe') {

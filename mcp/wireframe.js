@@ -304,20 +304,39 @@ function ghToken() {
 }
 
 // Short link: store the doc in a secret Gist (accessible by id) and return …/#g=<id>.
+// When `reuse` is true (fixed project code), find the existing gist for this code and
+// PATCH it instead of creating a new one → the link stays the same across updates.
 // Returns null if no token / network fails, so the caller can fall back to #z=.
-export async function shortLinkViaGist(doc, baseUrl = DEFAULT_BASE) {
+export async function shortLinkViaGist(doc, baseUrl = DEFAULT_BASE, reuse = false) {
   const token = ghToken();
   if (!token || typeof fetch !== 'function') return null;
+  const H = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'wiredraft-mcp', 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' };
+  const desc = 'WireDraft ' + (doc.code || '');
+  const files = { 'wiredraft.json': { content: JSON.stringify(doc) } };
+  const sep = baseUrl.includes('#') ? '' : '#g=';
   try {
-    const res = await fetch('https://api.github.com/gists', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'wiredraft-mcp', 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' },
-      body: JSON.stringify({ public: false, description: 'WireDraft ' + (doc.code || ''), files: { 'wiredraft.json': { content: JSON.stringify(doc) } } }),
-    });
-    if (!res.ok) return null;
-    const j = await res.json();
-    if (!j.id) return null;
-    const sep = baseUrl.includes('#') ? '' : '#g=';
-    return baseUrl + sep + j.id;
+    let existingId = null;
+    if (reuse && doc.code) {
+      for (let page = 1; page <= 3 && !existingId; page++) {
+        const r = await fetch('https://api.github.com/gists?per_page=100&page=' + page, { headers: H });
+        if (!r.ok) break;
+        const arr = await r.json();
+        if (!Array.isArray(arr) || !arr.length) break;
+        const hit = arr.find(g => g.description === desc && g.files && g.files['wiredraft.json']);
+        if (hit) existingId = hit.id;
+        if (arr.length < 100) break;
+      }
+    }
+    let id;
+    if (existingId) {
+      const r = await fetch('https://api.github.com/gists/' + existingId, { method: 'PATCH', headers: H, body: JSON.stringify({ description: desc, files }) });
+      if (!r.ok) return null;
+      id = existingId;
+    } else {
+      const r = await fetch('https://api.github.com/gists', { method: 'POST', headers: H, body: JSON.stringify({ public: false, description: desc, files }) });
+      if (!r.ok) return null;
+      id = (await r.json()).id;
+    }
+    return id ? { url: baseUrl + sep + id, updated: !!existingId } : null;
   } catch (e) { return null; }
 }

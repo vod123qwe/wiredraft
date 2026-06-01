@@ -293,6 +293,22 @@
   .obj-row:hover .del { opacity: 1; }
   .obj-row .del:hover { color: #ff6b81; }
 
+  /* layers↔objects tree */
+  .tree-row { display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 5px; }
+  .tree-row:hover { background: var(--hover); }
+  .tw-caret { background: transparent; border: none; color: var(--text-mute); cursor: pointer; width: 13px; flex: 0 0 auto; font-size: 8px; padding: 0; line-height: 1; }
+  .tw-caret.empty { cursor: default; color: transparent; }
+  .obj-node, .group-node { cursor: pointer; }
+  .obj-node .ty, .group-node .ty { color: var(--text-mute); font-family: ui-monospace, monospace; width: 14px; text-align: center; flex: 0 0 auto; }
+  .obj-node .nm, .group-node .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+  .group-node .nm { color: var(--text-dim); }
+  .obj-node.sel, .group-node.sel { background: rgba(13,153,255,0.16); }
+  .obj-node .cnt, .group-node .cnt { color: var(--text-mute); font-size: 9px; flex: 0 0 auto; }
+  .obj-node .del { background: transparent; border: none; color: var(--text-mute); cursor: pointer; opacity: 0; font-size: 13px; }
+  .obj-node:hover .del { opacity: 1; }
+  .obj-node .del:hover { color: #ff6b81; }
+  .tree-empty { color: var(--text-mute); font-size: 10px; padding: 1px 0 4px 26px; font-style: italic; }
+
   /* pages */
   .page-row { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 5px; cursor: pointer; }
   .page-row:hover { background: var(--hover); }
@@ -509,10 +525,6 @@
       </div>
     </div>
 
-    <div class="section collapsed" id="secObjects">
-      <button class="section-head" data-sec><span class="caret">▾</span> OBJECTS</button>
-      <div class="section-body"><div id="objList"></div></div>
-    </div>
 
 
     <div class="section" id="secExport">
@@ -1480,6 +1492,7 @@ function insertFrame() {
     if (ch === 'homeindicator') objs.push(mkComp('homeindicator', pos.col + 1, pos.row + M.h - 1, M.w - 2, 1, {}, gid));
   });
   objs.forEach(o => doc.objects.push(o));
+  collapsedGroups.add(gid);   // frames start collapsed in the tree (tidier)
   sel = new Set(objs.map(o => o.id));
   fitGridToContent(); fitGridToViewport(); renderAll();
 }
@@ -1489,7 +1502,7 @@ function bindSections() {
   document.querySelectorAll('[data-sec]').forEach(h => h.onclick = () => h.parentElement.classList.toggle('collapsed'));
 }
 
-function renderSidebar() { renderPages(); renderChromeGroup(); updateProjCode(); renderProps(); renderObjList(); renderLayers(); updateNoteBadges(); }
+function renderSidebar() { renderPages(); renderChromeGroup(); updateProjCode(); renderProps(); renderLayers(); updateNoteBadges(); }
 
 function updateProjCode() { const el = $('#projCode'); if (el) el.textContent = doc.code; }
 function renderPages() {
@@ -1672,11 +1685,11 @@ function bindProps(o) {
       if (inp.type === 'number') v = parseFloat(v) || 0;
       if (['navItems','tabs','items'].includes(k)) v = inp.value.split(',').map(s => s.trim()).filter(Boolean);
       setNested(o, k, v);
-      render(); renderObjList(); updateNoteBadges();
+      render(); renderLayers(); updateNoteBadges();
     };
     const ev = (inp.tagName === 'SELECT' || inp.type === 'checkbox') ? 'change' : 'input';
     inp.addEventListener(ev, () => { /* live */ let v = inp.type==='checkbox'?inp.checked:inp.value; if (inp.type==='number') v=parseFloat(v)||0; if(['navItems','tabs','items'].includes(k)) v=inp.value.split(',').map(s=>s.trim()).filter(Boolean); setNested(o,k,v); render(); updateNoteBadges(); });
-    inp.addEventListener('change', () => { renderObjList(); });
+    inp.addEventListener('change', () => { renderLayers(); });
   });
   $('#propsBody').querySelectorAll('[data-seg]').forEach(seg => {
     seg.querySelectorAll('button').forEach(b => b.onclick = () => {
@@ -1711,37 +1724,61 @@ function bindProps(o) {
   }
 }
 
-function renderObjList() {
-  const list = $('#objList'); list.innerHTML = '';
-  if (!doc.objects.length) { list.innerHTML = '<div class="empty-hint">Brak obiektów. Dodaj coś z palety ADD.</div>'; return; }
-  doc.objects.slice().reverse().forEach(o => {
-    const row = document.createElement('div');
-    row.className = 'obj-row' + (sel.has(o.id) ? ' sel' : '');
-    const tglyph = (o.type === 'component' ? GLY[o.componentType] : GLY[o.type]) || '▢';
-    const nm = o.name || o.label || o.content || o.componentType || o.type;
-    row.innerHTML = `<span class="ty">${tglyph}</span><span class="nm">${(o.annotation?'✎ ':'')+nm}</span><button class="del">×</button>`;
-    row.onclick = (e) => { if (e.target.classList.contains('del')) return; sel = new Set([o.id]); renderAll(); };
-    row.querySelector('.del').onclick = (e) => { e.stopPropagation(); pushHistory(); doc.objects = doc.objects.filter(x => x.id !== o.id); sel.delete(o.id); renderAll(); };
-    list.appendChild(row);
-  });
+/* unified Layers↔Objects tree: Layer → (group/frame →) object */
+const collapsedLayers = new Set();
+const collapsedGroups = new Set();
+function objTreeRow(o, depth) {
+  const row = document.createElement('div');
+  row.className = 'tree-row obj-node' + (sel.has(o.id) ? ' sel' : '');
+  row.style.paddingLeft = (depth * 14 + 6) + 'px';
+  const gly = (o.type === 'component' ? GLY[o.componentType] : GLY[o.type]) || '▢';
+  const nm = o.name || o.label || o.content || o.componentType || o.type;
+  row.innerHTML = `<span class="ty">${gly}</span><span class="nm">${(o.annotation ? '✎ ' : '') + nm}</span><button class="del" title="Usuń">×</button>`;
+  row.onclick = (e) => { if (e.target.classList.contains('del')) return; sel = new Set([o.id]); renderAll(); };
+  row.querySelector('.del').onclick = (e) => { e.stopPropagation(); pushHistory(); doc.objects = doc.objects.filter(x => x.id !== o.id); sel.delete(o.id); renderAll(); };
+  return row;
 }
-
 function renderLayers() {
   const list = $('#layerList'); list.innerHTML = '';
-  doc.layers.forEach((l, i) => {
-    const count = doc.objects.filter(o => (o.layerId || 'default') === l.id).length;
+  doc.layers.forEach(l => {
+    const objs = doc.objects.filter(o => (o.layerId || 'default') === l.id);
+    const lcoll = collapsedLayers.has(l.id);
     const row = document.createElement('div');
-    row.className = 'layer-row' + (l.visible ? '' : ' off') + (l.locked ? ' locked' : '');
-    row.innerHTML = `<button class="eye" title="${l.visible ? 'Ukryj warstwę' : 'Pokaż warstwę'}">${l.visible ? IC.eye : IC.eyeOff}</button>` +
-      `<button class="lock" title="${l.locked ? 'Zablokowana — kliknij, by odblokować' : 'Zablokuj warstwę'}">${l.locked ? IC.lockClosed : IC.lockOpen}</button>` +
+    row.className = 'tree-row layer-row' + (l.visible ? '' : ' off') + (l.locked ? ' locked' : '');
+    row.innerHTML = `<button class="tw-caret${objs.length ? '' : ' empty'}">${objs.length ? (lcoll ? '▸' : '▾') : '·'}</button>` +
+      `<button class="eye" title="Pokaż/ukryj">${l.visible ? IC.eye : IC.eyeOff}</button>` +
+      `<button class="lock" title="Zablokuj">${l.locked ? IC.lockClosed : IC.lockOpen}</button>` +
       `<span class="nm" contenteditable>${l.name}</span>` +
-      `<span class="cnt">${l.locked ? '🔒' : (count || 'Empty')}</span>`;
-    row.querySelector('.eye').onclick = () => { pushHistory(); l.visible = !l.visible; renderAll(); };
-    row.querySelector('.lock').onclick = () => { pushHistory(); l.locked = !l.locked; renderAll(); };
+      `<span class="cnt">${l.locked ? '🔒' : (objs.length || '')}</span>`;
+    row.querySelector('.tw-caret').onclick = (e) => { e.stopPropagation(); if (!objs.length) return; lcoll ? collapsedLayers.delete(l.id) : collapsedLayers.add(l.id); renderLayers(); };
+    row.querySelector('.eye').onclick = (e) => { e.stopPropagation(); pushHistory(); l.visible = !l.visible; renderAll(); };
+    row.querySelector('.lock').onclick = (e) => { e.stopPropagation(); pushHistory(); l.locked = !l.locked; renderAll(); };
     const nm = row.querySelector('.nm');
-    nm.onblur = () => { l.name = nm.textContent.trim() || l.name; renderSidebar(); };
-    nm.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); nm.blur(); } };
+    nm.onblur = () => { l.name = nm.textContent.trim() || l.name; renderLayers(); };
+    nm.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); nm.blur(); } };
     list.appendChild(row);
+    if (lcoll) return;
+    if (!objs.length) { const e = document.createElement('div'); e.className = 'tree-empty'; e.textContent = 'pusto'; list.appendChild(e); return; }
+    const seen = new Set();
+    objs.forEach(o => {
+      if (o.groupId) {
+        if (seen.has(o.groupId)) return;
+        seen.add(o.groupId);
+        const members = objs.filter(x => x.groupId === o.groupId);
+        const gcoll = collapsedGroups.has(o.groupId);
+        const gname = (members.find(x => x.frame) || members[0]).name || 'Grupa';
+        const grow = document.createElement('div');
+        grow.className = 'tree-row group-node' + (members.some(m => sel.has(m.id)) ? ' sel' : '');
+        grow.style.paddingLeft = '20px';
+        grow.innerHTML = `<button class="tw-caret">${gcoll ? '▸' : '▾'}</button><span class="ty">▣</span><span class="nm">${gname}</span><span class="cnt">${members.length}</span>`;
+        grow.querySelector('.tw-caret').onclick = (e) => { e.stopPropagation(); gcoll ? collapsedGroups.delete(o.groupId) : collapsedGroups.add(o.groupId); renderLayers(); };
+        grow.onclick = (e) => { if (e.target.closest('.tw-caret')) return; sel = new Set(members.map(m => m.id)); renderAll(); };
+        list.appendChild(grow);
+        if (!gcoll) members.forEach(m => list.appendChild(objTreeRow(m, 2)));
+      } else {
+        list.appendChild(objTreeRow(o, 1));
+      }
+    });
   });
 }
 function layerLocked(o) { const l = doc.layers.find(x => x.id === (o.layerId || 'default')); return l && l.locked; }

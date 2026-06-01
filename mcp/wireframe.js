@@ -142,12 +142,15 @@ function renderComponent(b, grid, o, c, r, w, h) {
     case 'tabbar': {
       drawBoxFrame(b, grid, c, r, w, h, bs, 'solid');
       const tabs = o.items || ['Home', 'Search', 'Profile']; const icons = o.icons || [];
-      const inner = w - 2, seg = Math.max(1, Math.floor(inner / tabs.length));
+      const inner = w - 2, n = Math.max(1, tabs.length), seg = inner / n;
       const twoRow = h >= 4 && icons.some(Boolean);
       tabs.forEach((t, i) => {
-        const cell = c + 1 + i * seg, txt = t.slice(0, seg - 1), pad = Math.max(0, Math.floor((seg - txt.length) / 2));
-        if (twoRow) { const ic = icons[i] || ''; if (ic) writeText(b, grid, cell + Math.max(0, Math.floor((seg - 1) / 2)), r + 1, ic); writeText(b, grid, cell + pad, r + h - 2, txt); }
-        else writeText(b, grid, cell + pad, r + Math.floor(h / 2), txt);
+        const center = c + 1 + Math.floor(i * seg + seg / 2);
+        const maxLen = Math.max(1, Math.floor(seg) - 1);
+        const txt = String(t).slice(0, maxLen);
+        const lblCol = center - Math.floor(txt.length / 2);
+        if (twoRow) { const ic = icons[i] || ''; if (ic) writeText(b, grid, center - Math.floor([...ic].length / 2), r + 1, ic); writeText(b, grid, lblCol, r + h - 2, txt); }
+        else writeText(b, grid, lblCol, r + Math.floor(h / 2), txt);
       });
       return;
     }
@@ -296,17 +299,23 @@ export function makeDoc(input = {}) {
   return { version: 2, code, grid, pages, activePage: pages[0].id };
 }
 
-// keep frame children inside the frame interior (shrink/move only when overflowing)
+// keep components inside their frame's interior (shrink/move only when overflowing).
+// A component belongs to a frame by shared groupId, or — failing that — by geometry
+// (its top-left sits inside the frame), so even ungrouped components dropped into a
+// frame get contained and don't poke past the border.
 function containFrames(objs) {
-  objs.filter(o => o.frame && o.position && o.width && o.height).forEach(F => {
+  const frames = objs.filter(o => o.frame && o.position && o.width && o.height);
+  if (!frames.length) return;
+  objs.forEach(m => {
+    if (!m.position || m.frame) return;
+    let F = frames.find(f => f !== m && m.groupId != null && f.groupId === m.groupId);
+    if (!F) F = frames.find(f => m.position.col >= f.position.col && m.position.col < f.position.col + f.width && m.position.row >= f.position.row && m.position.row < f.position.row + f.height);
+    if (!F) return;
     const iL = F.position.col + 1, iT = F.position.row + 1, iR = F.position.col + F.width - 2, iB = F.position.row + F.height - 2;
-    objs.forEach(m => {
-      if (m === F || m.groupId !== F.groupId || !m.position) return;
-      if (m.position.col < iL) m.position.col = iL;
-      if (m.position.row < iT) m.position.row = iT;
-      if (typeof m.width === 'number' && m.position.col + m.width - 1 > iR) m.width = Math.max(2, iR - m.position.col + 1);
-      if (typeof m.height === 'number' && m.position.row + m.height - 1 > iB) m.height = Math.max(1, iB - m.position.row + 1);
-    });
+    if (m.position.col < iL) m.position.col = iL;
+    if (m.position.row < iT) m.position.row = iT;
+    if (typeof m.width === 'number' && m.position.col + m.width - 1 > iR) m.width = Math.max(2, iR - m.position.col + 1);
+    if (typeof m.height === 'number' && m.position.row + m.height - 1 > iB) m.height = Math.max(1, iB - m.position.row + 1);
   });
 }
 

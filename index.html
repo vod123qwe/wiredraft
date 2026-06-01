@@ -933,15 +933,19 @@ function renderComponent(b, o, c, r, w, h) {
     case 'tabbar': {
       drawBoxFrame(b, c, r, w, h, bs, 'solid');
       const tabs = o.items || ['Home', 'Search', 'Profile']; const icons = o.icons || [];
-      const inner = w - 2, seg = Math.max(1, Math.floor(inner / tabs.length));
+      const inner = w - 2, n = Math.max(1, tabs.length), seg = inner / n;
       const twoRow = h >= 4 && icons.some(Boolean); // icon row above + label row when there's room + icons
       tabs.forEach((t, i) => {
-        const cell = c + 1 + i * seg, txt = t.slice(0, seg - 1), pad = Math.max(0, Math.floor((seg - txt.length) / 2));
+        const center = c + 1 + Math.floor(i * seg + seg / 2); // shared center column for icon + label
+        const maxLen = Math.max(1, Math.floor(seg) - 1);
+        const txt = String(t).slice(0, maxLen);
+        const lblCol = center - Math.floor(txt.length / 2);
         if (twoRow) {
-          const ic = icons[i] || ''; if (ic) writeText(b, cell + Math.max(0, Math.floor((seg - 1) / 2)), r + 1, ic);
-          writeText(b, cell + pad, r + h - 2, txt);
+          const ic = icons[i] || '';
+          if (ic) writeText(b, center - Math.floor([...ic].length / 2), r + 1, ic);
+          writeText(b, lblCol, r + h - 2, txt);
         } else {
-          writeText(b, cell + pad, r + Math.floor(h / 2), txt);
+          writeText(b, lblCol, r + Math.floor(h / 2), txt);
         }
       });
       return;
@@ -2061,7 +2065,7 @@ function exportSVG() {
   const ox = minX - pad, oy = minY - pad;
   const W = Math.round(maxX - minX + pad * 2), H = Math.round(maxY - minY + pad * 2);
 
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="monospace" font-size="${fs}">\n`;
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="'Courier New', 'Roboto Mono', ui-monospace, monospace" font-size="${fs}">\n`;
   svg += `<rect width="${W}" height="${H}" fill="${bg}"/>\n`;
   doc.layers.forEach(layer => {
     if (!layer.visible) return;
@@ -2070,7 +2074,11 @@ function exportSVG() {
     svg += `<g id="${esc(layer.name)}">\n`;
     objs.forEach(o => {
       const ob = boundsOf(o);
-      const b = makeBuf(ob.col, ob.row, ob.w, ob.h); renderObject(b, o);
+      // size the buffer to actual content so plain-text objects (which often have no
+      // explicit width → boundsOf defaults to 10) aren't clipped on export.
+      let bw = ob.w, bh = ob.h;
+      if (o.type === 'text') { const ls = String(o.content || '').split('\n'); bw = Math.max(bw, ...ls.map(l => l.length)); bh = Math.max(bh, ls.length); }
+      const b = makeBuf(ob.col, ob.row, bw, bh); renderObject(b, o);
       const name = o.name || o.label || o.componentType || o.type;
       svg += `<g id="${esc(name)}">`;
       for (let rr = 0; rr < b._rows; rr++) {
@@ -2079,7 +2087,10 @@ function exportSVG() {
         const text = b[rr].slice(start).join('').replace(/\s+$/,'');
         if (!text.trim()) continue;
         const absC = b._c0 + start, absR = b._r0 + rr;
-        svg += `<text x="${absC*cw - ox}" y="${absR*ch + ch*0.78 - oy}" fill="${ink}" xml:space="preserve">${esc(text)}</text>`;
+        // pin each row to its exact grid width so Figma's font substitution (it ignores
+        // generic "monospace") can't drift the columns/borders out of alignment.
+        const tlen = ([...text].length * cw).toFixed(1);
+        svg += `<text x="${absC*cw - ox}" y="${absR*ch + ch*0.78 - oy}" textLength="${tlen}" lengthAdjust="spacingAndGlyphs" fill="${ink}" xml:space="preserve">${esc(text)}</text>`;
       }
       svg += `</g>\n`;
     });
@@ -2155,15 +2166,19 @@ function wrapV1(v1) {
 // keep frame children inside the frame interior (shrinks/moves only when overflowing) —
 // removes the 1–2 cell "poke out" that imperfect nesting (often MCP-generated) produces
 function containFrames(objs) {
-  objs.filter(o => o.frame && o.position && o.width && o.height).forEach(F => {
+  const frames = objs.filter(o => o.frame && o.position && o.width && o.height);
+  if (!frames.length) return;
+  objs.forEach(m => {
+    if (!m.position || m.frame) return;
+    // belongs to a frame by shared groupId, else by geometry (top-left inside the frame)
+    let F = frames.find(f => f !== m && m.groupId != null && f.groupId === m.groupId);
+    if (!F) F = frames.find(f => m.position.col >= f.position.col && m.position.col < f.position.col + f.width && m.position.row >= f.position.row && m.position.row < f.position.row + f.height);
+    if (!F) return;
     const iL = F.position.col + 1, iT = F.position.row + 1, iR = F.position.col + F.width - 2, iB = F.position.row + F.height - 2;
-    objs.forEach(m => {
-      if (m === F || m.groupId !== F.groupId || !m.position) return;
-      if (m.position.col < iL) m.position.col = iL;
-      if (m.position.row < iT) m.position.row = iT;
-      if (typeof m.width === 'number' && m.position.col + m.width - 1 > iR) m.width = Math.max(2, iR - m.position.col + 1);
-      if (typeof m.height === 'number' && m.position.row + m.height - 1 > iB) m.height = Math.max(1, iB - m.position.row + 1);
-    });
+    if (m.position.col < iL) m.position.col = iL;
+    if (m.position.row < iT) m.position.row = iT;
+    if (typeof m.width === 'number' && m.position.col + m.width - 1 > iR) m.width = Math.max(2, iR - m.position.col + 1);
+    if (typeof m.height === 'number' && m.position.row + m.height - 1 > iB) m.height = Math.max(1, iB - m.position.row + 1);
   });
 }
 function loadDoc(data) {

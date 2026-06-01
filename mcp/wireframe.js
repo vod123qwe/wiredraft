@@ -287,11 +287,26 @@ export function makeDoc(input = {}) {
     pages = [{ id: 'pg' + uid(), name: input.name || 'Flow 1', layers: [{ id: 'default', name: 'Layer 1', visible: true }], objects: input.objects || [] }];
   }
   pages.forEach(pg => (pg.objects || []).forEach(o => { if (!o.id) o.id = uid(); if (!o.layerId) o.layerId = 'default'; if (!o.position) o.position = { col: 0, row: 0 }; }));
+  pages.forEach(pg => containFrames(pg.objects || []));
   fitGrid(grid, pages);
   // Project code = Live-session room id. Precedence: arg `code` → env WIREDRAFT_CODE → random.
   const fixed = input.code || process.env.WIREDRAFT_CODE;
   const code = (fixed && /^WD-[A-Z0-9]{4,}$/i.test(fixed)) ? fixed.toUpperCase() : genCode();
   return { version: 2, code, grid, pages, activePage: pages[0].id };
+}
+
+// keep frame children inside the frame interior (shrink/move only when overflowing)
+function containFrames(objs) {
+  objs.filter(o => o.frame && o.position && o.width && o.height).forEach(F => {
+    const iL = F.position.col + 1, iT = F.position.row + 1, iR = F.position.col + F.width - 2, iB = F.position.row + F.height - 2;
+    objs.forEach(m => {
+      if (m === F || m.groupId !== F.groupId || !m.position) return;
+      if (m.position.col < iL) m.position.col = iL;
+      if (m.position.row < iT) m.position.row = iT;
+      if (typeof m.width === 'number' && m.position.col + m.width - 1 > iR) m.width = Math.max(2, iR - m.position.col + 1);
+      if (typeof m.height === 'number' && m.position.row + m.height - 1 > iB) m.height = Math.max(1, iB - m.position.row + 1);
+    });
+  });
 }
 
 export function encodeUrl(doc, baseUrl = DEFAULT_BASE) {

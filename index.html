@@ -1544,6 +1544,7 @@ function insertFrame() {
   });
   objs.forEach(o => doc.objects.push(o));
   collapsedGroups.add(gid);   // frames start collapsed in the tree (tidier)
+  containFrames(doc.objects);
   sel = new Set(objs.map(o => o.id));
   fitGridToContent(); fitGridToViewport(); renderAll();
 }
@@ -2144,6 +2145,20 @@ function wrapV1(v1) {
   const pg = { id: 'pg' + uid(), name: 'Flow 1', layers: v1.layers || [{ id:'default', name:'Layer 1', visible:true }], objects: v1.objects || [] };
   return { version: 2, code: v1.code || genCode(), grid: v1.grid || { cols:80, rows:30, cellW:10, cellH:20 }, pages: [pg], activePage: pg.id };
 }
+// keep frame children inside the frame interior (shrinks/moves only when overflowing) —
+// removes the 1–2 cell "poke out" that imperfect nesting (often MCP-generated) produces
+function containFrames(objs) {
+  objs.filter(o => o.frame && o.position && o.width && o.height).forEach(F => {
+    const iL = F.position.col + 1, iT = F.position.row + 1, iR = F.position.col + F.width - 2, iB = F.position.row + F.height - 2;
+    objs.forEach(m => {
+      if (m === F || m.groupId !== F.groupId || !m.position) return;
+      if (m.position.col < iL) m.position.col = iL;
+      if (m.position.row < iT) m.position.row = iT;
+      if (typeof m.width === 'number' && m.position.col + m.width - 1 > iR) m.width = Math.max(2, iR - m.position.col + 1);
+      if (typeof m.height === 'number' && m.position.row + m.height - 1 > iB) m.height = Math.max(1, iB - m.position.row + 1);
+    });
+  });
+}
 function loadDoc(data) {
   let nd;
   if (Array.isArray(data)) nd = wrapV1({ objects: data });
@@ -2159,6 +2174,7 @@ function loadDoc(data) {
     if (!pg.layers || !pg.layers.length) pg.layers = [{ id:'default', name:'Layer 1', visible:true }];
     pg.objects = pg.objects || [];
     pg.objects.forEach(o => { if (!o.id) o.id = uid(); if (!o.layerId) o.layerId = pg.layers[0].id; if (!o.position) o.position = { col:0, row:0 }; });
+    containFrames(pg.objects);
   });
   if (!nd.activePage || !nd.pages.find(p => p.id === nd.activePage)) nd.activePage = nd.pages[0].id;
   doc = nd; activatePage(doc.activePage);

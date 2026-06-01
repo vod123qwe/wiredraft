@@ -46,7 +46,7 @@ const GRID = { type: 'object', properties: { cols: { type: 'integer' }, rows: { 
 
 const LAYOUT_GUIDE =
   'Coordinates are character cells (1 cell = 1 monospace char). position={col,row} is the top-left, 0-based. ' +
-  'Boxes/components have a 1-cell border; interior = width-2 × height-2. To nest a child, offset +2 col / +2 row from the parent and keep it 2 cells inside the far edge. ' +
+  'Boxes/components have a 1-cell border; interior = width-2 × height-2. To nest a child inside a parent at (col C, row R) of size (W,H): put it at (C+1, R+1) with width ≤ W-2 and height ≤ H-2 so it never crosses the parent border (a child must satisfy child.col+child.width ≤ C+W-1). Frame children are auto-contained to the frame interior on load, but size them to fit. ' +
   'Min sizes: button=label+4, input=label+6, card/modal h≥6, table/browser w≥20 h≥5. Use connectors (fromId→toId) to link screens into flows.';
 
 const tools = [
@@ -74,7 +74,7 @@ const tools = [
   },
 ];
 
-const server = new Server({ name: 'wiredraft', version: '0.6.0' }, { capabilities: { tools: {} } });
+const server = new Server({ name: 'wiredraft', version: '0.6.1' }, { capabilities: { tools: {} } });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
 

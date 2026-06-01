@@ -55,8 +55,10 @@ Model obiektów jest zgodny z **wiretext** (`box / text / line / arrow / compone
 
 Narzędzie jest w 100% statyczne (GitHub Pages), więc stan makiety jedzie w **URL hash**:
 
-- `#z=<gzip+base64url>` — **krótki link** (kompresja gzip przez wbudowany `CompressionStream`); ~5–6× krótszy
-  niż surowy base64. To domyślny format „Share link" i linków z MCP.
+- `#g=<gist-id>` — **najkrótszy link** (~70 znaków): projekt zapisany w sekretnym GitHub Gist, edytor wczytuje
+  go po `fetch`. Tak domyślnie linkuje MCP, gdy ma token (patrz niżej).
+- `#z=<gzip+base64url>` — link **samodzielny** (cały projekt w URL-u, gzip przez `CompressionStream`); fallback
+  gdy brak tokenu/sieci. To format „Share link" w edytorze (przeglądarka nie tworzy gistów).
 - `#d=<base64url(JSON)>` / `#j=<uri-encoded JSON>` — starsze formaty, nadal wczytywane (kompatybilność wstecz).
 - **Paste / import…** — wklej `Doc` lub samą tablicę `objects[]` (Claude może dać sam JSON).
 - **Drag & drop** pliku `.json` na canvas.
@@ -90,6 +92,12 @@ claude mcp add wiredraft -- npx -y github:vod123qwe/wiredraft
   }
 }
 ```
+
+**Krótkie linki (gist).** `create_wireframe` domyślnie zapisuje projekt w **sekretnym GitHub Gist** i zwraca
+krótki link `…/#g=<id>` (~70 znaków) zamiast długiego `#z=`. Wymaga tokenu GitHub: brany z `GITHUB_TOKEN` /
+`GH_TOKEN`, a jeśli brak — z `gh auth token` (gdy masz zalogowane `gh`). Bez tokenu/sieci → fallback do `#z=`
+(zero regresji). Wymuszenie długiego linku: argument `inline: true`. (Gist jest „secret" — niepubliczny, ale
+dostępny po znajomości linku.)
 
 Potem: w Claude Code poproś np. *„zrób makietę ekranu logowania"* → dostaniesz link, otwierasz go w WireDraft,
 dopieszczasz i eksportujesz do Figmy. (Instrukcja jest też w aplikacji: **SHARE → ⚡ Połącz Claude Code (MCP)**.)

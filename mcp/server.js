@@ -6,7 +6,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { makeDoc, encodeUrl, renderAscii, DEFAULT_BASE } from './wireframe.js';
+import { makeDoc, encodeUrl, renderAscii, shortLinkViaGist, DEFAULT_BASE } from './wireframe.js';
 
 const BASE_URL = process.env.WIREDRAFT_URL || DEFAULT_BASE;
 
@@ -62,6 +62,7 @@ const tools = [
         name: { type: 'string', description: 'Page name when using `objects`.' },
         grid: GRID,
         code: { type: 'string', description: 'Fixed project code (np. WD-XXXXXXXX). Emitowany do linku → wszystkie linki z tym kodem otwierają ten sam pokój Live session / przestrzeń. Domyślnie env WIREDRAFT_CODE, w razie braku — losowy.' },
+        inline: { type: 'boolean', description: 'Force a self-contained #z= link (whole project encoded in the URL). Default false → short #g= link via a secret Gist when a GitHub token is available (env GITHUB_TOKEN/GH_TOKEN or `gh auth token`), else falls back to #z=.' },
       },
     },
   },
@@ -72,7 +73,7 @@ const tools = [
   },
 ];
 
-const server = new Server({ name: 'wiredraft', version: '0.4.0' }, { capabilities: { tools: {} } });
+const server = new Server({ name: 'wiredraft', version: '0.5.0' }, { capabilities: { tools: {} } });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
 
@@ -81,9 +82,13 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   try {
     if (name === 'create_wireframe') {
       const doc = makeDoc(args);
-      const url = encodeUrl(doc, BASE_URL);
+      // Prefer a short link (project stored in a secret Gist) → …/#g=<id>; fall back to
+      // the self-contained #z= link if no token / offline. Pass inline:true to force #z=.
+      let url, kind = 'inline (self-contained)';
+      if (args.inline !== true) { const s = await shortLinkViaGist(doc, BASE_URL); if (s) { url = s; kind = 'short (gist)'; } }
+      if (!url) url = encodeUrl(doc, BASE_URL);
       const previews = doc.pages.map(p => `── ${p.name} ──\n${renderAscii(p, doc.grid) || '(empty)'}`).join('\n\n');
-      const text = `Open in WireDraft (editable):\n${url}\n\nProject code: ${doc.code} · pages: ${doc.pages.length}\n\nPreview:\n${previews}`;
+      const text = `Open in WireDraft (editable):\n${url}\n\nLink: ${kind} · project code: ${doc.code} · pages: ${doc.pages.length}\n\nPreview:\n${previews}`;
       return { content: [{ type: 'text', text }] };
     }
     if (name === 'render_wireframe') {

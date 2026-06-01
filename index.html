@@ -2017,6 +2017,17 @@ async function loadFromHash() {
   const h = location.hash.slice(1);
   if (!h) return false;
   try {
+    if (h.startsWith('g=')) {
+      toast('Wczytywanie z gist…');
+      const id = h.slice(2);
+      const res = await fetch('https://api.github.com/gists/' + id);
+      if (!res.ok) throw new Error('gist ' + res.status);
+      const j = await res.json();
+      const file = Object.values(j.files || {})[0];
+      let content = file && file.content;
+      if (file && file.truncated && file.raw_url) content = await (await fetch(file.raw_url)).text();
+      loadDoc(JSON.parse(content)); return true;
+    }
     if (h.startsWith('z=')) { loadDoc(JSON.parse(await gunzipToString(h.slice(2)))); return true; }
     if (h.startsWith('d=')) {
       let b64 = h.slice(2).replace(/-/g,'+').replace(/_/g,'/');

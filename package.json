@@ -1,6 +1,6 @@
 {
   "name": "wiredraft",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "WireDraft — single-file lo-fi wireframe editor (wiretext-compatible) + MCP server for Claude Code",
   "type": "module",
   "bin": {

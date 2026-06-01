@@ -3,6 +3,7 @@
 // and builds editor URLs with the document encoded in the #z= hash (gzip).
 
 import { gzipSync } from 'node:zlib';
+import { execSync } from 'node:child_process';
 
 export const DEFAULT_BASE = 'https://vod123qwe.github.io/wiredraft/';
 
@@ -292,4 +293,31 @@ export function encodeUrl(doc, baseUrl = DEFAULT_BASE) {
   const b64 = gzipSync(Buffer.from(json, 'utf8')).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const sep = baseUrl.includes('#') ? '' : '#z=';
   return baseUrl + sep + b64;
+}
+
+// GitHub token: env first, then `gh auth token` (the user is usually already logged in).
+function ghToken() {
+  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
+  if (process.env.GH_TOKEN) return process.env.GH_TOKEN;
+  try { const t = execSync('gh auth token', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); if (t) return t; } catch (e) {}
+  return null;
+}
+
+// Short link: store the doc in a secret Gist (accessible by id) and return …/#g=<id>.
+// Returns null if no token / network fails, so the caller can fall back to #z=.
+export async function shortLinkViaGist(doc, baseUrl = DEFAULT_BASE) {
+  const token = ghToken();
+  if (!token || typeof fetch !== 'function') return null;
+  try {
+    const res = await fetch('https://api.github.com/gists', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'wiredraft-mcp', 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' },
+      body: JSON.stringify({ public: false, description: 'WireDraft ' + (doc.code || ''), files: { 'wiredraft.json': { content: JSON.stringify(doc) } } }),
+    });
+    if (!res.ok) return null;
+    const j = await res.json();
+    if (!j.id) return null;
+    const sep = baseUrl.includes('#') ? '' : '#g=';
+    return baseUrl + sep + j.id;
+  } catch (e) { return null; }
 }

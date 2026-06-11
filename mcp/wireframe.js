@@ -93,7 +93,7 @@ function renderComponent(b, grid, o, c, r, w, h) {
     }
     case 'breadcrumb': { const items = o.items || ['Home','Page']; writeText(b, grid, c, r, items.join(o.separator || ' > ').slice(0, w)); return; }
     case 'navbar': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const items = o.navItems || []; writeText(b, grid, c + 2, r + Math.floor(h / 2), ('=  ' + items.join('  ')).slice(0, w - 4)); return; }
-    case 'tabs': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const tabs = o.tabs || ['Tab 1','Tab 2']; writeText(b, grid, c + 2, r + Math.floor(h / 2), tabs.join(' │ ').slice(0, w - 4)); return; }
+    case 'tabs': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const tabs = o.tabs || ['Tab 1','Tab 2']; const active = o.activeStep ?? 0; const n = Math.max(1, tabs.length), inner = w - 2, seg = inner / n, mid = r + 1; tabs.forEach((t, i) => { const start = c + 1 + Math.round(i * seg), end = c + 1 + Math.round((i + 1) * seg), segW = end - start; const lbl = String(t).slice(0, Math.max(1, segW - 1)); const lx = start + Math.max(0, Math.floor((segW - lbl.length) / 2)); writeText(b, grid, lx, mid, lbl); if (i === active && mid + 1 < r + h - 1) for (let x = 0; x < lbl.length; x++) put(b, grid, lx + x, mid + 1, '─'); }); return; }
     case 'list': {
       const items = o.items || ['Item 1','Item 2'];
       const pre = o.listStyle === 'dash' ? () => '- ' : o.listStyle === 'number' ? (i) => (i + 1) + '. ' : () => '• ';
@@ -102,7 +102,7 @@ function renderComponent(b, grid, o, c, r, w, h) {
     }
     case 'progress': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const inner = w - 2, filled = Math.round(inner * (o.progress ?? 0) / 100); const mid = r + Math.floor(h / 2); for (let i = 0; i < inner; i++) put(b, grid, c + 1 + i, mid, i < filled ? '▓' : '░'); return; }
     case 'avatar': { const ab = o.borderStyle || (o.variant === 'square' ? 'single' : 'rounded'); drawBoxFrame(b, grid, c, r, w, h, ab, 'solid'); const ini = (lab || 'A').slice(0, 2).split('').join(' '); drawCenteredLabel(b, grid, c, r, w, h, ini); return; }
-    case 'image': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, grid, c, r, w, h, o.icon || '⊠'); return; }
+    case 'image': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, grid, c, r, w, h, o.icon || '▣'); return; }
     case 'card':
     case 'modal': {
       drawBoxFrame(b, grid, c, r, w, h, bs, 'solid');
@@ -163,8 +163,8 @@ function renderComponent(b, grid, o, c, r, w, h) {
     case 'segmented': {
       drawBoxFrame(b, grid, c, r, w, h, bs, 'solid');
       const segs = o.items || ['One', 'Two', 'Three']; const active = o.activeStep ?? 0;
-      const parts = segs.map((s, i) => i === active ? '«' + s + '»' : ' ' + s + ' ');
-      writeText(b, grid, c + 2, r + Math.floor(h / 2), parts.join('│').slice(0, w - 4)); return;
+      const n = Math.max(1, segs.length), inner = w - 2, seg = inner / n, mid = r + Math.floor(h / 2);
+      segs.forEach((s, i) => { const start = c + 1 + Math.round(i * seg), end = c + 1 + Math.round((i + 1) * seg); if (i > 0) put(b, grid, start, mid, '│'); const x0 = start + (i > 0 ? 1 : 0), segW = end - x0; const raw = i === active ? '[' + s + ']' : s; const lbl = String(raw).slice(0, Math.max(1, segW)); writeText(b, grid, x0 + Math.max(0, Math.floor((segW - lbl.length) / 2)), mid, lbl); }); return;
     }
     case 'iosswitch': writeText(b, grid, c, r + Math.floor(h / 2), (o.checked !== false ? '(  ●) ' : '(●  ) ') + lab); return;
     case 'searchbar': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); writeText(b, grid, c + 2, r + Math.floor(h / 2), ('⌕ ' + (lab || 'Search')).slice(0, w - 4)); return; }
@@ -172,7 +172,7 @@ function renderComponent(b, grid, o, c, r, w, h) {
     case 'heading': { const t = lab || 'Heading'; writeText(b, grid, c, r, t.slice(0, w)); for (let i = 0; i < Math.min(w, t.length); i++) put(b, grid, c + i, r + 1, '═'); return; }
     case 'link': { const t = lab || 'link'; writeText(b, grid, c, r, t.slice(0, w)); for (let i = 0; i < Math.min(w, t.length); i++) put(b, grid, c + i, r + 1, '─'); return; }
     case 'badge': writeText(b, grid, c, r, ('( ' + (lab || '3') + ' )').slice(0, w)); return;
-    case 'chip': writeText(b, grid, c, r, ('[ ' + (lab || 'Tag') + ' ✕ ]').slice(0, w)); return;
+    case 'chip': { const x = o.variant === 'removable' ? ' ×' : ''; writeText(b, grid, c, r, ('[ ' + (lab || 'Tag') + x + ' ]').slice(0, w)); return; }
     case 'kbd': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, grid, c, r, w, h, lab || 'Ctrl'); return; }
     case 'slider': { const mid = r + Math.floor(h / 2); for (let i = 0; i < w; i++) put(b, grid, c + i, mid, i === 0 ? '├' : i === w - 1 ? '┤' : '─'); const p = Math.round((w - 1) * ((o.value ?? 50) / (o.maxValue ?? 100))); put(b, grid, c + Math.max(1, Math.min(w - 2, p)), mid, '●'); return; }
     case 'numstep': writeText(b, grid, c, r + Math.floor(h / 2), ('[ − ]  ' + (o.value ?? 1) + '  [ + ]').slice(0, w)); return;
@@ -188,17 +188,19 @@ function renderComponent(b, grid, o, c, r, w, h) {
     case 'grouplist': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const items = o.items || ['Settings','Privacy','About']; items.forEach((it, i) => { const rr = r + 1 + i * 2; if (rr < r + h - 1) { writeText(b, grid, c + 2, rr, it.slice(0, w - 6)); put(b, grid, c + w - 3, rr, '›'); if (i < items.length - 1 && rr + 1 < r + h - 1) hDivider(b, grid, c, rr + 1, w, bs); } }); return; }
     case 'pagecontrol': { const n = o.maxValue ?? 4, act = o.activeStep ?? 0; let s = ''; for (let i = 0; i < n; i++) s += (i === act ? '● ' : '○ '); const t = s.trim(); writeText(b, grid, c + centerPad(w, t.length), r + Math.floor(h / 2), t); return; }
     case 'listitem': { const lead = o.icon || '●'; const trail = o.trailing || '›'; const mid = r + Math.floor((h - (o.body ? 1 : 0)) / 2); writeText(b, grid, c, mid, (lead + '  ' + (lab || 'Title')).slice(0, Math.max(0, w - trail.length - 1))); if (o.body) writeText(b, grid, c + 3, mid + 1, String(o.body).slice(0, w - 5)); writeText(b, grid, c + w - trail.length, mid, trail); for (let i = 0; i < w; i++) put(b, grid, c + i, r + h - 1, '─'); return; }
-    case 'appbar': { for (let i = 0; i < w; i++) put(b, grid, c + i, r + h - 1, '─'); const lead = o.icon || '≡'; const mid = r + Math.floor((h - 1) / 2); writeText(b, grid, c + 1, mid, (lead + '  ' + (lab || 'Title')).slice(0, w - 2)); const right = (o.items || ['⋯']).join('  '); if (right) writeText(b, grid, c + Math.max(1, w - 1 - right.length), mid, right); return; }
+    case 'appbar': { for (let i = 0; i < w; i++) put(b, grid, c + i, r + h - 1, '─'); const lead = o.icon || '≡'; const mid = r + Math.floor((h - 1) / 2); writeText(b, grid, c + 1, mid, (lead + '  ' + (lab || 'Title')).slice(0, w - 2)); const right = (o.items || ['…']).join('  '); if (right) writeText(b, grid, c + Math.max(1, w - 1 - right.length), mid, right); return; }
     case 'bottomsheet': { drawBoxFrame(b, grid, c, r, w, h, o.borderStyle || 'rounded', 'solid'); const grab = '────'; writeText(b, grid, c + centerPad(w, grab.length), r + 1, grab); if (lab) writeText(b, grid, c + 2, r + 2, lab.slice(0, w - 4)); hDivider(b, grid, c, r + 3, w, o.borderStyle || 'rounded'); if (o.body) String(o.body).split('\n').forEach((ln, i) => { if (r + 4 + i < r + h - 1) writeText(b, grid, c + 2, r + 4 + i, ln.slice(0, w - 4)); }); return; }
-    case 'banner': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const mid = r + Math.floor(h / 2); const act = o.body || 'Action'; writeText(b, grid, c + 2, mid, ((o.icon || 'ⓘ') + ' ' + (lab || 'Banner message')).slice(0, w - 5 - act.length)); writeText(b, grid, c + Math.max(2, w - 2 - act.length), mid, act); return; }
+    case 'banner': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const mid = r + Math.floor(h / 2); const act = o.body || 'Action'; writeText(b, grid, c + 2, mid, ((o.icon || 'i') + ' ' + (lab || 'Banner message')).slice(0, w - 5 - act.length)); writeText(b, grid, c + Math.max(2, w - 2 - act.length), mid, act); return; }
     case 'textarea': { let bt = r, bh = h; if (o.variant === 'labeled') { writeText(b, grid, c, r, (o.fieldLabel || 'Label').slice(0, w)); bt = r + 1; bh = h - 1; } drawBoxFrame(b, grid, c, bt, w, bh, bs, 'solid'); writeText(b, grid, c + 2, bt + 1, (lab || 'Text…').slice(0, w - 4)); return; }
     case 'datefield': { let bt = r, bh = h; if (o.variant === 'labeled') { writeText(b, grid, c, r, (o.fieldLabel || 'Label').slice(0, w)); bt = r + 1; bh = h - 1; } drawBoxFrame(b, grid, c, bt, w, bh, bs, 'solid'); writeText(b, grid, c + 2, bt + Math.floor(bh / 2), (lab || 'YYYY-MM-DD').slice(0, w - 5)); put(b, grid, c + w - 3, bt + Math.floor(bh / 2), '▦'); return; }
     case 'otp': { const n = o.maxValue || 4; let x = c; for (let i = 0; i < n && x + 3 <= c + w; i++) { drawBoxFrame(b, grid, x, r, 4, 3, 'single', 'solid'); put(b, grid, x + 1, r + 1, (o.label || '')[i] || '_'); x += 5; } return; }
     case 'chipgroup': { const items = o.items || ['All', 'Active', 'Done']; writeText(b, grid, c, r + Math.floor(h / 2), items.map(it => '[' + it + ']').join(' ').slice(0, w)); return; }
-    case 'carousel': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, grid, c, r, w, h - 1, o.icon || '⊠'); const n = o.maxValue || 3, act = o.activeStep || 0; let dots = ''; for (let i = 0; i < n; i++) dots += (i === act ? '● ' : '○ '); dots = dots.trim(); writeText(b, grid, c + centerPad(w, dots.length), r + h - 2, dots); return; }
+    case 'carousel': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, grid, c, r, w, h - 1, o.icon || '▣'); const n = o.maxValue || 3, act = o.activeStep || 0; let dots = ''; for (let i = 0; i < n; i++) dots += (i === act ? '● ' : '○ '); dots = dots.trim(); writeText(b, grid, c + centerPad(w, dots.length), r + h - 2, dots); return; }
     case 'emptystate': { const midR = r + Math.floor(h / 2); put(b, grid, c + Math.floor((w - 1) / 2), midR - 1, o.icon || '∅'); const title = lab || 'Nothing here'; writeText(b, grid, c + centerPad(w, title.length), midR, title.slice(0, w)); if (o.body) writeText(b, grid, c + centerPad(w, o.body.length), midR + 1, o.body.slice(0, w)); return; }
-    case 'map': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); for (let rr = r + 1; rr < r + h - 1; rr += 2) for (let cc = c + 1; cc < c + w - 1; cc += 4) put(b, grid, cc, rr, '·'); drawCenteredLabel(b, grid, c, r, w, h, '⌖ ' + (lab || 'Map')); return; }
-    case 'keyboard': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const kr = ['q w e r t y u i o p', 'a s d f g h j k l', '⇧  z x c v b n m  ⌫', '123      space      ⏎']; for (let i = 0; i < kr.length && r + 1 + i < r + h - 1; i++) { const t = kr[i].slice(0, w - 2); writeText(b, grid, c + 1 + centerPad(w - 2, t.length), r + 1 + i, t); } return; }
+    case 'map': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); for (let rr = r + 1; rr < r + h - 1; rr += 2) for (let cc = c + 1; cc < c + w - 1; cc += 4) put(b, grid, cc, rr, '·'); drawCenteredLabel(b, grid, c, r, w, h, '◇ ' + (lab || 'Map')); return; }
+    case 'keyboard': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const kr = ['q w e r t y u i o p', 'a s d f g h j k l', '⇧  z x c v b n m  ←', '123      space      ⏎']; for (let i = 0; i < kr.length && r + 1 + i < r + h - 1; i++) { const t = kr[i].slice(0, w - 2); writeText(b, grid, c + 1 + centerPad(w - 2, t.length), r + 1 + i, t); } return; }
+    case 'tooltip': { const bh = Math.max(2, h - 1); drawBoxFrame(b, grid, c, r, w, bh, bs, 'solid'); drawCenteredLabel(b, grid, c, r, w, bh, lab || 'Tooltip'); put(b, grid, c + Math.floor(w / 2), r + bh, '▾'); return; }
+    case 'avatargroup': { const items = o.items || ['JK', 'AM', 'TS']; let s = items.slice(0, 3).map(x => '(' + String(x).slice(0, 2) + ')').join(''); const extra = o.maxValue || 0; if (extra > 0) s += ' +' + extra; writeText(b, grid, c, r + Math.floor(h / 2), s.slice(0, w)); return; }
     default: drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); drawCenteredLabel(b, grid, c, r, w, h, lab || ct);
   }
 }

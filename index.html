@@ -1462,11 +1462,9 @@ function renderChromeGroup() {
     const b = document.createElement('button'); b.className = 'pal-btn'; b.dataset.tool = item.t;
     b.innerHTML = '<span class="gly">' + item.gly + '</span><span class="nm">' + item.nm + '</span>';
     b.onclick = () => { if (item.t === '__frame') insertFrame(); else addObject(item.t); };
-    if (item.t !== '__frame') {
-      b.draggable = true;
-      b.addEventListener('dragstart', (e) => { dragTool = item.t; e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/wiredraft', item.t); b.classList.add('dragging-tile'); });
-      b.addEventListener('dragend', () => { dragTool = null; b.classList.remove('dragging-tile'); hideGhost(); });
-    }
+    b.draggable = true;
+    b.addEventListener('dragstart', (e) => { dragTool = item.t; e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/wiredraft', item.t); b.classList.add('dragging-tile'); });
+    b.addEventListener('dragend', () => { dragTool = null; b.classList.remove('dragging-tile'); hideGhost(); });
     p.appendChild(b);
   });
   applyCompFilter();
@@ -1565,6 +1563,7 @@ function toolSize(t) {
   if (t === 'text') return { w:10, h:1 };
   if (t === 'line' || t === 'arrow') return { w:12, h:1 };
   if (t === 'connector') return { w:4, h:3 };
+  if (t === '__frame') { const M = MODES[currentMode()]; return { w:M.w, h:M.h }; }
   const d = compDefaults(t); return { w:d.w, h:d.h };
 }
 function addObject(t, pos) {
@@ -1659,12 +1658,13 @@ const MODES = {
 function currentMode() { const p = doc.pages.find(x => x.id === doc.activePage); return (p && p.mode) || 'mobile'; }
 function setMode(m) { const p = doc.pages.find(x => x.id === doc.activePage); if (p) p.mode = m; renderChromeGroup(); }
 function mkComp(ct, col, row, w, h, extra, gid) { return { id: uid(), type: 'component', componentType: ct, layerId: doc.layers[0].id, position: { col, row }, width: w, height: h, groupId: gid, ...extra }; }
-function insertFrame() {
+function insertFrame(dropPos) {
   const M = MODES[currentMode()]; const gid = 'grp' + uid();
-  // flow: place new frame to the right of existing frames (screens line up)
+  // dropped at a position → use it; otherwise flow to the right of existing frames (screens line up)
   const frames = doc.objects.filter(o => o.frame);
   let pos;
-  if (frames.length) { const right = Math.max(...frames.map(f => f.position.col + f.width)); const top = Math.min(...frames.map(f => f.position.row)); pos = { col: right + 4, row: top }; }
+  if (dropPos) pos = { col: Math.max(0, Math.min(doc.grid.cols - M.w, dropPos.col)), row: Math.max(0, Math.min(doc.grid.rows - M.h, dropPos.row)) };
+  else if (frames.length) { const right = Math.max(...frames.map(f => f.position.col + f.width)); const top = Math.min(...frames.map(f => f.position.row)); pos = { col: right + 4, row: top }; }
   else pos = { col: 3, row: 2 };
   pushHistory();
   const fid = uid();
@@ -2629,7 +2629,7 @@ area.addEventListener('drop', (e) => {
   if (!dragTool) return;
   e.preventDefault(); e.stopPropagation();
   const sz = toolSize(dragTool); const cell = ghostCellFromEvent(e, sz);
-  addObject(dragTool, cell);
+  if (dragTool === '__frame') insertFrame(cell); else addObject(dragTool, cell);
   dragTool = null; hideGhost();
 });
 

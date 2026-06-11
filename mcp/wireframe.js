@@ -134,23 +134,24 @@ function renderComponent(b, grid, o, c, r, w, h) {
     case 'skeleton': { for (let rr = r; rr < r + h; rr++) for (let i = 0; i < w; i++) put(b, grid, c + i, rr, '░'); return; }
     case 'statusbar': { const time = lab || '9:41'; const right = o.body || '▮▮▮ 100%'; writeText(b, grid, c + 1, r, time.slice(0, w - 2)); writeText(b, grid, c + Math.max(1, w - 1 - right.length), r, right); return; }
     case 'iosnav': {
-      drawBoxFrame(b, grid, c, r, w, h, bs, 'solid');
-      const items = o.items || ['Back', '']; const back = items[0] ? '‹ ' + items[0] : '‹'; const right = items[1] || ''; const mid = r + Math.floor(h / 2);
-      writeText(b, grid, c + 2, mid, back.slice(0, w - 4)); if (right) writeText(b, grid, c + Math.max(2, w - 2 - right.length), mid, right);
-      drawCenteredLabel(b, grid, c, r, w, h, lab || 'Title'); return;
+      for (let i = 0; i < w; i++) put(b, grid, c + i, r + h - 1, '─'); // bottom hairline (no side borders)
+      const items = o.items || ['Back', '']; const back = items[0] ? '‹ ' + items[0] : '‹'; const right = items[1] || ''; const mid = r + Math.floor((h - 1) / 2);
+      const title = lab || 'Title'; writeText(b, grid, c + centerPad(w, title.length), mid, title);
+      writeText(b, grid, c + 1, mid, back.slice(0, w - 2)); if (right) writeText(b, grid, c + Math.max(1, w - 1 - right.length), mid, right);
+      return;
     }
     case 'tabbar': {
-      drawBoxFrame(b, grid, c, r, w, h, bs, 'solid');
+      for (let i = 0; i < w; i++) put(b, grid, c + i, r, '─'); // top hairline (no side borders)
       const tabs = o.items || ['Home', 'Search', 'Profile']; const icons = o.icons || [];
-      const inner = w - 2, n = Math.max(1, tabs.length), seg = inner / n;
+      const n = Math.max(1, tabs.length), seg = w / n;
       const twoRow = h >= 4 && icons.some(Boolean);
       tabs.forEach((t, i) => {
-        const center = c + 1 + Math.floor(i * seg + seg / 2);
+        const center = c + Math.floor(i * seg + seg / 2);
         const maxLen = Math.max(1, Math.floor(seg) - 1);
         const txt = String(t).slice(0, maxLen);
         const lblCol = center - Math.floor(txt.length / 2);
-        if (twoRow) { const ic = icons[i] || ''; if (ic) writeText(b, grid, center - Math.floor([...ic].length / 2), r + 1, ic); writeText(b, grid, lblCol, r + h - 2, txt); }
-        else writeText(b, grid, lblCol, r + Math.floor(h / 2), txt);
+        if (twoRow) { const ic = icons[i] || ''; if (ic) writeText(b, grid, center - Math.floor([...ic].length / 2), r + 1, ic); writeText(b, grid, lblCol, r + h - 1, txt); }
+        else writeText(b, grid, lblCol, r + Math.floor((h + 1) / 2), txt);
       });
       return;
     }
@@ -182,7 +183,7 @@ function renderComponent(b, grid, o, c, r, w, h) {
     case 'grouplist': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const items = o.items || ['Settings','Privacy','About']; items.forEach((it, i) => { const rr = r + 1 + i * 2; if (rr < r + h - 1) { writeText(b, grid, c + 2, rr, it.slice(0, w - 6)); put(b, grid, c + w - 3, rr, '›'); if (i < items.length - 1 && rr + 1 < r + h - 1) for (let x = 2; x < w - 2; x++) put(b, grid, c + x, rr + 1, '─'); } }); return; }
     case 'pagecontrol': { const n = o.maxValue ?? 4, act = o.activeStep ?? 0; let s = ''; for (let i = 0; i < n; i++) s += (i === act ? '● ' : '○ '); const t = s.trim(); writeText(b, grid, c + centerPad(w, t.length), r + Math.floor(h / 2), t); return; }
     case 'listitem': { const lead = o.icon || '●'; const trail = o.trailing || '›'; const mid = r + Math.floor((h - (o.body ? 1 : 0)) / 2); writeText(b, grid, c, mid, (lead + '  ' + (lab || 'Title')).slice(0, Math.max(0, w - trail.length - 1))); if (o.body) writeText(b, grid, c + 3, mid + 1, String(o.body).slice(0, w - 5)); writeText(b, grid, c + w - trail.length, mid, trail); for (let i = 0; i < w; i++) put(b, grid, c + i, r + h - 1, '─'); return; }
-    case 'appbar': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const lead = o.icon || '≡'; const mid = r + Math.floor(h / 2); writeText(b, grid, c + 2, mid, (lead + '  ' + (lab || 'Title')).slice(0, w - 4)); const right = (o.items || ['⋯']).join('  '); writeText(b, grid, c + Math.max(2, w - 2 - right.length), mid, right); return; }
+    case 'appbar': { for (let i = 0; i < w; i++) put(b, grid, c + i, r + h - 1, '─'); const lead = o.icon || '≡'; const mid = r + Math.floor((h - 1) / 2); writeText(b, grid, c + 1, mid, (lead + '  ' + (lab || 'Title')).slice(0, w - 2)); const right = (o.items || ['⋯']).join('  '); if (right) writeText(b, grid, c + Math.max(1, w - 1 - right.length), mid, right); return; }
     case 'bottomsheet': { drawBoxFrame(b, grid, c, r, w, h, o.borderStyle || 'rounded', 'solid'); const grab = '────'; writeText(b, grid, c + centerPad(w, grab.length), r + 1, grab); if (lab) writeText(b, grid, c + 2, r + 2, lab.slice(0, w - 4)); for (let i = 1; i < w - 1; i++) put(b, grid, c + i, r + 3, '─'); if (o.body) String(o.body).split('\n').forEach((ln, i) => { if (r + 4 + i < r + h - 1) writeText(b, grid, c + 2, r + 4 + i, ln.slice(0, w - 4)); }); return; }
     case 'banner': { drawBoxFrame(b, grid, c, r, w, h, bs, 'solid'); const mid = r + Math.floor(h / 2); const act = o.body || 'Action'; writeText(b, grid, c + 2, mid, ((o.icon || 'ⓘ') + ' ' + (lab || 'Banner message')).slice(0, w - 5 - act.length)); writeText(b, grid, c + Math.max(2, w - 2 - act.length), mid, act); return; }
     case 'textarea': { let bt = r, bh = h; if (o.variant === 'labeled') { writeText(b, grid, c, r, (o.fieldLabel || 'Label').slice(0, w)); bt = r + 1; bh = h - 1; } drawBoxFrame(b, grid, c, bt, w, bh, bs, 'solid'); writeText(b, grid, c + 2, bt + 1, (lab || 'Text…').slice(0, w - 4)); return; }

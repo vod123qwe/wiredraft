@@ -6,7 +6,7 @@
 <title>WireDraft</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --workspace: #1e1e1e;
@@ -19,33 +19,44 @@
     --text: #e6e6e6;
     --text-dim: #888;
     --text-mute: #6a6a6a;
-    --grid-dot: rgba(255,255,255,0.06);
-    --grid-dot-major: rgba(255,255,255,0.13);
+    --grid-dot: rgba(255,255,255,0.05);
+    --grid-dot-major: rgba(255,255,255,0.10);
     --ink: #d6d9de;
     --line: rgba(255,255,255,0.05);
     --line-strong: rgba(255,255,255,0.11);
     --fill-soft: rgba(255,255,255,0.035);
+    --ctl-h: 32px;
   }
   body.light {
-    --workspace: #e7e8ea;
-    --artboard: #f1f2f4;
-    --sidebar: #f3f4f6;
-    --pop: #f6f7f8;
-    --divider: #dde0e4;
-    --hover: #e9ebee;
-    --text: #2a2e34;
-    --text-dim: #646a72;
-    --text-mute: #9a9fa7;
-    --grid-dot: rgba(0,0,0,0.06);
-    --grid-dot-major: rgba(0,0,0,0.13);
-    --ink: #3b4046;
-    --line: rgba(0,0,0,0.08);
-    --line-strong: rgba(0,0,0,0.16);
-    --fill-soft: rgba(0,0,0,0.035);
+    --workspace: #f5f5f5;
+    --artboard: #ffffff;
+    --sidebar: #ffffff;
+    --pop: #ffffff;
+    --divider: #e6e6e6;
+    --hover: #f0f0f0;
+    --text: #1e1e1e;
+    --text-dim: #757575;
+    --text-mute: #b3b3b3;
+    --grid-dot: rgba(0,0,0,0.05);
+    --grid-dot-major: rgba(0,0,0,0.09);
+    --ink: #2b2b2b;
+    --line: rgba(0,0,0,0.10);
+    --line-strong: rgba(0,0,0,0.20);
+    --fill-soft: rgba(0,0,0,0.04);
   }
-  body.light .pill, body.light .tb-tabs, body.light .ptab-add { box-shadow: 0 2px 10px rgba(0,0,0,0.10), inset 0 0 0 1px var(--line); }
-  body.light .sidebar { box-shadow: -1px 0 0 var(--divider); }
+  /* Figma-flat toolbar: subtle 1px ring + soft shadow, no heavy float */
+  body.light .pill, body.light .ptab, body.light .ptab-add { box-shadow: 0 1px 2px rgba(0,0,0,0.06), inset 0 0 0 1px var(--line); }
+  body.light .ptab.active { box-shadow: 0 1px 2px rgba(0,0,0,0.06), inset 0 0 0 1px var(--accent); }
+  body.light .sidebar { box-shadow: none; }
+  /* no stray focus ring on toolbar controls (kept for keyboard users via :focus-visible) */
+  .pill button, .pill-icon, .ptab, .ptab-add { outline: none; }
+  .pill button:focus-visible, .pill-icon:focus-visible, .ptab:focus-visible, .ptab-add:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+  body.light .help-pop, body.light .icon-pop { box-shadow: 0 8px 28px rgba(0,0,0,0.14), 0 0 0 1px var(--line); }
+  body.light .modal { box-shadow: 0 16px 48px rgba(0,0,0,0.18), 0 0 0 1px var(--line); }
   * { box-sizing: border-box; }
+  /* no harsh black UA focus ring anywhere; keyboard users still get a subtle accent ring */
+  button:focus, input:focus, select:focus, textarea:focus, [contenteditable]:focus, a:focus { outline: none; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [contenteditable]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   html, body { height: 100%; height: 100dvh; }
   body {
     margin: 0;
@@ -84,8 +95,8 @@
     position: relative;
     background-color: transparent;
     background-image:
-      radial-gradient(var(--grid-dot-major) 1.1px, transparent 1.6px),
-      radial-gradient(var(--grid-dot) 0.8px, transparent 1.1px);
+      radial-gradient(circle, var(--grid-dot-major) 0.9px, transparent 1.1px),
+      radial-gradient(circle, var(--grid-dot) 0.7px, transparent 0.9px);
     background-repeat: repeat, repeat;
   }
   .artboard-label { display: none; }
@@ -98,7 +109,7 @@
     z-index: 1;
     margin: 0;
     color: var(--ink);
-    font-family: "SF Mono", ui-monospace, "Cascadia Code", "Consolas", Menlo, monospace;
+    font-family: "JetBrains Mono", "SF Mono", ui-monospace, "Cascadia Code", "Consolas", Menlo, monospace;
     white-space: pre;
     pointer-events: none;
     letter-spacing: 0;
@@ -173,20 +184,23 @@
   .brand {
     padding: 14px 16px 12px;
     display: flex; align-items: center; gap: 8px;
-    border-bottom: 2px solid var(--divider);
+    border-bottom: 1px solid var(--divider);
   }
   .brand b { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 700; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
   .brand .tag { color: var(--text-mute); font-size: 9px; }
-  .section { border-bottom: 2px solid var(--divider); }
+  .section { border-bottom: 1px solid var(--divider); }
+  .section:last-child { border-bottom: none; }
   .section-head {
-    background: transparent; border: none; color: var(--text-dim);
+    background: transparent; border: none; color: var(--text);
     font-family: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
-    font-weight: 700; font-size: 10px; line-height: 1;
-    text-transform: uppercase; letter-spacing: .12em;
-    padding: 14px 16px 10px; display: flex; align-items: center; gap: 8px;
+    font-weight: 700; font-size: 11px; line-height: 1;
+    text-transform: uppercase; letter-spacing: .08em;
+    padding: 18px 16px 12px; display: flex; align-items: center; gap: 8px;
     cursor: pointer; width: 100%; text-align: left;
   }
+  .section-head .caret { color: var(--text-mute); }
   .section-head:hover { color: var(--text); }
+  .section-head:hover .caret { color: var(--text-dim); }
   .section-head .caret { font-size: 9px; color: var(--text-mute); width: 8px; transition: transform .15s; }
   .section.collapsed .section-head .caret { transform: rotate(-90deg); }
   .section-body { padding: 2px 16px 16px; }
@@ -244,6 +258,22 @@
   .pal-btn .gly { font-family: ui-monospace, monospace; font-size: 13px; line-height: 1; color: var(--text-dim); }
   .pal-btn:hover .gly, .pal-btn.active .gly { color: var(--text); }
   .pal-btn .nm { font-size: 9px; }
+  .pal-btn.hidden { display: none; }
+
+  /* unified COMPONENTS section: search + small sub-headers between groups */
+  .comp-search { position: relative; margin: 0 0 10px; }
+  .comp-search input { width: 100%; background: var(--workspace); border: none; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--line); color: var(--text); font: inherit; font-size: 11px; padding: 7px 26px 7px 9px; outline: none; }
+  .comp-search input:focus { box-shadow: inset 0 0 0 1px var(--accent); }
+  .comp-search input::placeholder { color: var(--text-mute); }
+  .comp-search .cs-clear { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 19px; height: 19px; border: none; background: transparent; color: var(--text-mute); cursor: pointer; border-radius: 4px; font-size: 14px; line-height: 1; display: none; align-items: center; justify-content: center; }
+  .comp-search.has-text .cs-clear { display: flex; }
+  .comp-search .cs-clear:hover { color: var(--text); background: var(--fill-soft); }
+  .comp-sub { margin-bottom: 4px; }
+  .comp-subhead { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 600; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-mute); margin: 13px 0 6px; }
+  .comp-sub:first-of-type .comp-subhead { margin-top: 2px; }
+  .comp-sub.hidden { display: none; }
+  .comp-empty { color: var(--text-mute); font-size: 10px; padding: 4px 2px; display: none; }
+  .comp-search.has-text ~ .comp-noresult { display: block; }
 
   .btn {
     background: var(--accent); color: #fff; border: none;
@@ -276,6 +306,11 @@
   .layer-row .eye:hover, .layer-row .lock:hover { color: var(--text); background: rgba(255,255,255,0.07); }
   .layer-row .nm { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; outline: none; padding: 0 2px; }
   .layer-row .cnt { color: var(--text-mute); font-size: 9px; flex: 0 0 auto; min-width: 14px; text-align: right; }
+  .layer-row .ty { flex: 0 0 auto; width: 13px; text-align: center; color: var(--text-mute); font-family: ui-monospace, monospace; font-size: 11px; }
+  .layer-row .ty.cm { color: #e0a83a; }
+  .layer-row .lcopy { flex: 0 0 auto; background: transparent; border: none; color: var(--text-mute); cursor: pointer; font-size: 12px; line-height: 1; padding: 2px 4px; border-radius: 4px; opacity: 0; transition: opacity .1s, color .1s; }
+  .layer-row:hover .lcopy { opacity: .7; }
+  .layer-row .lcopy:hover { color: var(--accent); opacity: 1; background: var(--fill-soft); }
   .layer-row.off .nm { color: var(--text-mute); }
   .layer-row.off .eye { color: var(--text-mute); }
   /* locked layer — clearly marked: amber left bar, tint, amber padlock */
@@ -336,21 +371,22 @@
   .tb-left { display: flex; align-items: center; gap: 6px; min-width: 0; }
   .tb-right { display: flex; align-items: center; gap: 8px; }
 
-  /* Figma-style page tabs */
-  .tb-tabs { display: flex; align-items: center; gap: 3px; background: var(--sidebar); border-radius: 7px; padding: 3px; box-shadow: 0 2px 10px rgba(0,0,0,0.22), inset 0 0 0 1px var(--line); max-width: 50vw; overflow-x: auto; }
+  /* Page tabs — each tab is its own standalone pill (not a single shared bar) */
+  .tb-tabs { display: flex; align-items: center; gap: 6px; background: transparent; padding: 0; box-shadow: none; max-width: 50vw; overflow-x: auto; }
   .tb-tabs::-webkit-scrollbar { height: 0; }
-  .ptab { display: flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 6px; cursor: pointer; color: var(--text-dim); font-size: 11px; white-space: nowrap; border: none; background: transparent; transition: background .12s, color .12s; }
-  .ptab:hover { background: var(--fill-soft); color: var(--text); }
-  .ptab.active { background: rgba(13,153,255,0.12); color: var(--text); box-shadow: inset 0 0 0 1px rgba(13,153,255,0.5); }
+  .ptab { display: flex; align-items: center; gap: 6px; min-height: var(--ctl-h); padding: 0 11px; border-radius: 7px; cursor: pointer; color: var(--text-dim); font-size: 11px; font-weight: 500; white-space: nowrap; border: none; background: var(--sidebar); box-shadow: 0 1px 3px rgba(0,0,0,0.18), inset 0 0 0 1px var(--line); flex: 0 0 auto; transition: background .12s, color .12s, box-shadow .12s; }
+  .ptab:hover { color: var(--text); background: var(--hover); }
+  .ptab.active { color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.18), inset 0 0 0 1px var(--accent); }
   .ptab .idx { color: var(--text-mute); font-family: "JetBrains Mono", monospace; font-size: 9px; }
+  .ptab.active .idx { color: var(--accent); }
   .ptab .nm { outline: none; }
   .ptab .x { background: transparent; border: none; color: var(--text-mute); cursor: pointer; font-size: 13px; line-height: 1; padding: 0; margin-left: 1px; opacity: 0; }
   .ptab:hover .x { opacity: .65; }
   .ptab .x:hover { color: #ff6b81; opacity: 1; }
-  .ptab-add { background: var(--sidebar); border: none; color: var(--text-dim); cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 16px; line-height: 1; box-shadow: 0 2px 10px rgba(0,0,0,0.22), inset 0 0 0 1px var(--line); flex: 0 0 auto; transition: background .1s, color .1s; }
+  .ptab-add { background: var(--sidebar); border: none; color: var(--text-dim); cursor: pointer; width: var(--ctl-h); height: var(--ctl-h); display: flex; align-items: center; justify-content: center; border-radius: 7px; font-size: 16px; line-height: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.18), inset 0 0 0 1px var(--line); flex: 0 0 auto; transition: background .1s, color .1s; }
   .ptab-add:hover { color: var(--text); background: var(--hover); }
   .chrome-title { /* dynamic platform label inside section head */ }
-  .pill-icon { width: 28px; height: 28px; padding: 0; justify-content: center; cursor: pointer; color: var(--text-dim); font-weight: 700; transition: background .1s, color .1s; }
+  .pill-icon { border: none; width: var(--ctl-h); height: var(--ctl-h); padding: 0; justify-content: center; cursor: pointer; color: var(--text); font-weight: 600; font-size: 13px; transition: background .1s, color .1s; }
   .pill-icon:hover { color: var(--text); background: var(--hover); }
 
   /* shortcuts popover */
@@ -379,14 +415,14 @@
   .icon-cell:hover { background: var(--fill-soft); box-shadow: inset 0 0 0 1px var(--accent); }
 
   .pill {
-    background: var(--sidebar); border-radius: 7px; padding: 4px 5px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.22), inset 0 0 0 1px var(--line);
-    display: flex; align-items: center; gap: 3px;
+    background: var(--sidebar); border-radius: 7px; padding: 0 4px; min-height: var(--ctl-h);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.18), inset 0 0 0 1px var(--line);
+    display: flex; align-items: center; gap: 2px;
   }
-  .pill button { background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 5px 8px; border-radius: 5px; font: inherit; transition: background .1s, color .1s; }
+  .pill button { background: transparent; border: none; color: var(--text); cursor: pointer; padding: 5px 8px; border-radius: 5px; font: inherit; font-weight: 500; transition: background .1s, color .1s; }
   .pill button:hover { background: var(--fill-soft); color: var(--text); }
-  .pill .sep { width: 1px; height: 15px; background: var(--line); margin: 0 2px; }
-  .zoomval { min-width: 38px; text-align: center; color: var(--text); font-variant-numeric: tabular-nums; }
+  .pill .sep { width: 1px; height: 16px; background: var(--line); margin: 0 2px; }
+  .zoomval { min-width: 40px; text-align: center; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   /* modal */
   .modal-back { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; }
@@ -417,8 +453,10 @@
   .dash-card.active { box-shadow: inset 0 0 0 1.5px var(--accent); }
   .dash-card .dc-acts { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; opacity: 0; }
   .dash-card:hover .dc-acts { opacity: 1; }
-  .dash-card .dc-acts button { width: 22px; height: 22px; border: none; border-radius: 5px; background: var(--sidebar); color: var(--text-mute); cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); font-size: 12px; }
+  .dash-card .dc-acts button { width: 22px; height: 22px; border: none; border-radius: 5px; background: var(--sidebar); color: var(--text-mute); cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); font-size: 12px; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .dash-card .dc-acts button svg { display: block; }
   .dash-card .dc-acts button:hover { color: var(--text); }
+  .dash-card .dc-acts .dc-link:hover { color: var(--accent); }
   .dash-card .dc-acts .dc-del:hover { color: #ff6b81; }
   .dash-empty { grid-column: 1/-1; color: var(--text-mute); font-size: 11px; text-align: center; padding: 30px 0; }
   .dash-foot { color: var(--text-mute); font-size: 10px; margin-top: 12px; }
@@ -468,11 +506,13 @@
   @media (max-width: 820px) { .statusbar { display: none; } }
 
   .toast {
-    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: #2c2c2c; color: var(--text); padding: 9px 16px; border-radius: 7px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
-    z-index: 300; opacity: 0; transition: all .2s; pointer-events: none; font-size: 11px;
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(16px);
+    background: #1e1e1e; color: #fff; padding: 11px 16px; border-radius: 9px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.30);
+    z-index: 300; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none;
+    font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 9px; max-width: 72vw;
   }
+  .toast .toast-ic { color: var(--accent); font-weight: 700; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   @media (max-width: 820px) {
@@ -511,39 +551,42 @@
       <div class="section-body"><div class="palette" data-group="secTools"></div></div>
     </div>
 
-    <div class="section" id="secChrome">
-      <button class="section-head" data-sec><span class="caret">▾</span> <span class="chrome-title">MOBILE</span></button>
+    <div class="section" id="secComponents">
+      <button class="section-head" data-sec><span class="caret">▾</span> COMPONENTS</button>
       <div class="section-body">
-        <div class="palette" id="chromePalette"></div>
-        <div class="info"><b>Frame</b> = ramka urządzenia z chrome. Tryb zmienisz selektorem u góry.</div>
+        <div class="comp-search" id="compSearch">
+          <input type="text" id="compSearchInput" placeholder="Szukaj komponentu…" autocomplete="off" spellcheck="false">
+          <button class="cs-clear" id="compSearchClear" title="Wyczyść">×</button>
+        </div>
+        <div class="comp-sub" data-sub="chrome">
+          <div class="comp-subhead"><span class="chrome-title" id="chromeTitle">MOBILE</span></div>
+          <div class="palette" id="chromePalette"></div>
+        </div>
+        <div class="comp-sub" data-sub="secInput">
+          <div class="comp-subhead">Forms</div>
+          <div class="palette" data-group="secInput"></div>
+        </div>
+        <div class="comp-sub" data-sub="secLayout">
+          <div class="comp-subhead">Containers</div>
+          <div class="palette" data-group="secLayout"></div>
+        </div>
+        <div class="comp-sub" data-sub="secNav">
+          <div class="comp-subhead">Navigation</div>
+          <div class="palette" data-group="secNav"></div>
+        </div>
+        <div class="comp-sub" data-sub="secContent">
+          <div class="comp-subhead">Display</div>
+          <div class="palette" data-group="secContent"></div>
+        </div>
+        <div class="comp-empty" id="compEmpty">Brak komponentów dla „<span id="compEmptyQ"></span>".</div>
       </div>
-    </div>
-
-    <div class="section" id="secInput">
-      <button class="section-head" data-sec><span class="caret">▾</span> FORMS</button>
-      <div class="section-body"><div class="palette" data-group="secInput"></div></div>
-    </div>
-
-    <div class="section collapsed" id="secLayout">
-      <button class="section-head" data-sec><span class="caret">▾</span> CONTAINERS</button>
-      <div class="section-body"><div class="palette" data-group="secLayout"></div></div>
-    </div>
-
-    <div class="section collapsed" id="secNav">
-      <button class="section-head" data-sec><span class="caret">▾</span> NAVIGATION</button>
-      <div class="section-body"><div class="palette" data-group="secNav"></div></div>
-    </div>
-
-    <div class="section collapsed" id="secContent">
-      <button class="section-head" data-sec><span class="caret">▾</span> DISPLAY</button>
-      <div class="section-body"><div class="palette" data-group="secContent"></div></div>
     </div>
 
     <div class="section collapsed" id="secLayers">
       <button class="section-head" data-sec><span class="caret">▾</span> LAYERS</button>
       <div class="section-body">
         <div id="layerList"></div>
-        <button class="btn ghost" id="addLayer" style="margin-top:6px">+ Layer</button>
+        <div class="info" style="margin-top:6px">Warstwy są automatyczne: <b>1 ekran = 1 warstwa</b> (ramka + jej zawartość), strzałki i komentarze mają własne warstwy. Ukryj/pokaż okiem; <b>⧉</b> kopiuje pojedynczy ekran do Figmy.</div>
       </div>
     </div>
 
@@ -584,7 +627,7 @@
 <!-- floating top controls -->
 <div class="topbar">
   <div class="tb-left">
-    <button class="pill pill-icon" id="dashBtn" title="Projekty (dashboard)">▦</button>
+    <button class="pill pill-icon" id="dashBtn" title="Projekty / Home"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.3 7.4 8 2.6l5.7 4.8"/><path d="M3.7 6.6V13.2h8.6V6.6"/><path d="M6.6 13.2V9.4h2.8v3.8"/></svg></button>
     <div class="tb-tabs" id="pageTabs"></div>
     <button class="ptab-add" id="addPage" title="Nowa strona">+</button>
   </div>
@@ -726,6 +769,7 @@ const IC = {
   eyeOff: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 4A6.7 6.7 0 0 1 8 3.5C12 3.5 14.5 8 14.5 8a11 11 0 0 1-2 2.4M9.5 9.6A2 2 0 0 1 6.4 6.5M1.5 8S4 3.5 8 3.5M2.5 2.5l11 11"/></svg>',
   lockClosed: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7V5a3 3 0 0 1 6 0v2"/><rect x="3.3" y="7" width="9.4" height="6.5" rx="1.4" fill="currentColor" stroke="none"/></svg>',
   lockOpen: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7V4.8A3 3 0 0 1 10.8 3.9"/><rect x="3.3" y="7" width="9.4" height="6.5" rx="1.4" fill="none"/></svg>',
+  link: '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 9.4a2.4 2.4 0 0 0 3.4 0l2-2a2.4 2.4 0 1 0-3.4-3.4l-1 1"/><path d="M9.4 6.6a2.4 2.4 0 0 0-3.4 0l-2 2a2.4 2.4 0 1 0 3.4 3.4l1-1"/></svg>',
 };
 
 /* ---------- document ---------- */
@@ -920,32 +964,33 @@ function renderComponent(b, o, c, r, w, h) {
       return;
     }
     case 'iosnav': {
-      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      for (let i = 0; i < w; i++) put(b, c + i, r + h - 1, '─'); // bottom hairline (no side borders → no doubling inside a frame)
       const items = o.items || ['Back', ''];
       const back = items[0] ? '‹ ' + items[0] : '‹';
       const right = items[1] || '';
-      const mid = r + Math.floor(h / 2);
-      writeText(b, c + 2, mid, back.slice(0, w - 4));
-      if (right) writeText(b, c + Math.max(2, w - 2 - right.length), mid, right);
-      drawCenteredLabel(b, c, r, w, h, lab || 'Title');
+      const mid = r + Math.floor((h - 1) / 2);
+      const title = lab || 'Title';
+      writeText(b, c + centerPad(w, title.length), mid, title);
+      writeText(b, c + 1, mid, back.slice(0, w - 2));
+      if (right) writeText(b, c + Math.max(1, w - 1 - right.length), mid, right);
       return;
     }
     case 'tabbar': {
-      drawBoxFrame(b, c, r, w, h, bs, 'solid');
+      for (let i = 0; i < w; i++) put(b, c + i, r, '─'); // top hairline (no side borders)
       const tabs = o.items || ['Home', 'Search', 'Profile']; const icons = o.icons || [];
-      const inner = w - 2, n = Math.max(1, tabs.length), seg = inner / n;
+      const n = Math.max(1, tabs.length), seg = w / n;
       const twoRow = h >= 4 && icons.some(Boolean); // icon row above + label row when there's room + icons
       tabs.forEach((t, i) => {
-        const center = c + 1 + Math.floor(i * seg + seg / 2); // shared center column for icon + label
+        const center = c + Math.floor(i * seg + seg / 2); // shared center column for icon + label
         const maxLen = Math.max(1, Math.floor(seg) - 1);
         const txt = String(t).slice(0, maxLen);
         const lblCol = center - Math.floor(txt.length / 2);
         if (twoRow) {
           const ic = icons[i] || '';
           if (ic) writeText(b, center - Math.floor([...ic].length / 2), r + 1, ic);
-          writeText(b, lblCol, r + h - 2, txt);
+          writeText(b, lblCol, r + h - 1, txt);
         } else {
-          writeText(b, lblCol, r + Math.floor(h / 2), txt);
+          writeText(b, lblCol, r + Math.floor((h + 1) / 2), txt);
         }
       });
       return;
@@ -1005,11 +1050,11 @@ function renderComponent(b, o, c, r, w, h) {
       return;
     }
     case 'appbar': {
-      drawBoxFrame(b, c, r, w, h, bs, 'solid');
-      const lead = o.icon || '≡'; const mid = r + Math.floor(h / 2);
-      writeText(b, c + 2, mid, (lead + '  ' + (lab || 'Title')).slice(0, w - 4));
+      for (let i = 0; i < w; i++) put(b, c + i, r + h - 1, '─'); // bottom hairline (no side borders)
+      const lead = o.icon || '≡'; const mid = r + Math.floor((h - 1) / 2);
+      writeText(b, c + 1, mid, (lead + '  ' + (lab || 'Title')).slice(0, w - 2));
       const right = (o.items || ['⋯']).join('  ');
-      writeText(b, c + Math.max(2, w - 2 - right.length), mid, right);
+      if (right) writeText(b, c + Math.max(1, w - 1 - right.length), mid, right);
       return;
     }
     case 'bottomsheet': {
@@ -1155,6 +1200,42 @@ function drawConnector(b, o) {
 function hseg(path, x0, x1, y) { const s = x0 < x1 ? 1 : -1; for (let x = x0; x !== x1 + s; x += s) path.push([x, y, '─']); }
 function vseg(path, y0, y1, x) { const s = y0 < y1 ? 1 : -1; for (let y = y0; y !== y1 + s; y += s) path.push([x, y, '│']); }
 
+/* ---------- auto layers ----------
+   Layers are derived from the document, not managed by hand: one layer per screen
+   (a frame + the objects inside it), one shared "Arrows" layer for lines/arrows/
+   connectors, a "Canvas" layer for anything loose, and a virtual "Comments" toggle
+   for annotations. Visibility/lock persist across re-sync via the stable layer id. */
+let showComments = true;
+function isArrowObj(o) { return o.type === 'line' || o.type === 'arrow' || o.type === 'connector'; }
+function screenLayerId(F) { return 'scr:' + (F.groupId || F.id); }
+function syncLayers() {
+  const objs = doc.objects || [];
+  const prev = {}; (doc.layers || []).forEach(l => prev[l.id] = l);
+  const frames = objs.filter(o => o.frame && o.position && o.width && o.height);
+  const owner = new Map();
+  // each frame claims itself + its members (shared groupId, or geometrically inside)
+  frames.forEach(F => {
+    const lid = screenLayerId(F); owner.set(F, lid);
+    objs.forEach(o => {
+      if (o === F || isArrowObj(o) || owner.has(o) || !o.position) return;
+      const inGroup = F.groupId != null && o.groupId === F.groupId;
+      const inGeom = o.position.col >= F.position.col && o.position.col < F.position.col + F.width && o.position.row >= F.position.row && o.position.row < F.position.row + F.height;
+      if (inGroup || inGeom) owner.set(o, lid);
+    });
+  });
+  objs.forEach(o => { if (isArrowObj(o)) owner.set(o, '__arrows'); });
+  objs.forEach(o => { if (!owner.has(o)) owner.set(o, 'default'); });
+  objs.forEach(o => { o.layerId = owner.get(o); });
+
+  const mk = (id, name, kind, frameId) => ({ id, name, kind, frameId, visible: prev[id] ? prev[id].visible !== false : true, locked: prev[id] ? !!prev[id].locked : false });
+  const layers = [];
+  const looseN = objs.filter(o => owner.get(o) === 'default').length;
+  if (looseN || !frames.length) layers.push(mk('default', frames.length ? 'Loose' : 'Canvas', 'canvas'));
+  frames.forEach((F, i) => layers.push(mk(screenLayerId(F), F.name || ('Screen ' + (i + 1)), 'screen', F.id)));
+  if (objs.some(isArrowObj)) layers.push(mk('__arrows', 'Arrows', 'arrows'));
+  doc.layers = layers.length ? layers : [mk('default', 'Canvas', 'canvas')];
+}
+
 /* ---------- ordering ---------- */
 function orderedObjects() {
   const lidx = {}; doc.layers.forEach((l, i) => lidx[l.id] = i);
@@ -1267,6 +1348,20 @@ function applyView() {
   $('#zoomVal').textContent = Math.round(view.zoom * 100) + '%';
   const sz = $('#stZoom'); if (sz) sz.textContent = Math.round(view.zoom * 100) + '%';
 }
+/* zoom anchored to a screen point (cursor or viewport center) so it doesn't drift to a corner.
+   Screen position of an artboard-local point L is: base + zoom·(pan + L) — CSS `zoom` scales the
+   translate too — so we solve pan to keep the anchor's local point fixed on screen. */
+function zoomAt(factor, sx, sy) {
+  const a0 = $('#artboard').getBoundingClientRect();
+  const z0 = view.zoom, z1 = Math.min(5, Math.max(0.2, z0 * factor));
+  if (z1 === z0) return;
+  const baseX = a0.left - z0 * view.panX, baseY = a0.top - z0 * view.panY;
+  const lx = (sx - a0.left) / z0, ly = (sy - a0.top) / z0; // artboard-local point under the anchor
+  view.zoom = z1;
+  view.panX = (sx - baseX) / z1 - lx;
+  view.panY = (sy - baseY) / z1 - ly;
+  applyView();
+}
 
 let snap = true;
 function updateStatus() {
@@ -1274,7 +1369,7 @@ function updateStatus() {
   const ss = $('#stSel'); if (ss) ss.textContent = sel.size ? ' · ' + sel.size + ' selected' : '';
 }
 
-function renderAll() { render(); renderSidebar(); updateStatus(); if (typeof room !== 'undefined' && room && !applyingRemote) scheduleBroadcast(); if (typeof renderPeers === 'function') renderPeers(); if (typeof scheduleAutosave === 'function' && !(typeof applyingRemote !== 'undefined' && applyingRemote)) scheduleAutosave(); }
+function renderAll() { syncLayers(); render(); renderSidebar(); updateStatus(); if (typeof room !== 'undefined' && room && !applyingRemote) scheduleBroadcast(); if (typeof renderPeers === 'function') renderPeers(); if (typeof scheduleAutosave === 'function' && !(typeof applyingRemote !== 'undefined' && applyingRemote)) scheduleAutosave(); }
 
 /* ============================================================
    Sidebar
@@ -1315,7 +1410,6 @@ const GROUPS = {
     { t:'emptystate', gly:'∅', nm:'Empty' },
   ],
   secNav: [
-    { t:'appbar', gly:'⊤', nm:'App bar' },
     { t:'navbar', gly:'≡', nm:'Navbar' },
     { t:'tabs', gly:'⊟', nm:'Tabs' },
     { t:'segmented', gly:'▢', nm:'Segment' },
@@ -1356,13 +1450,13 @@ Object.assign(GLY, { statusbar:'▭', iosnav:'‹', tabbar:'⊞', segmented:'▢
 /* platform chrome group — contents depend on the active page's design mode */
 const CHROME = {
   desktop: [{ t:'__frame', gly:'▭', nm:'Frame' }, { t:'browser', gly:'⊡', nm:'Browser' }, { t:'navbar', gly:'≡', nm:'Top nav' }, { t:'searchbar', gly:'⌕', nm:'Search' }],
-  mobile:  [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'appbar', gly:'⊤', nm:'App bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'listitem', gly:'≣', nm:'List item' }, { t:'bottomsheet', gly:'⊔', nm:'Sheet' }, { t:'fab', gly:'⊕', nm:'FAB' }, { t:'banner', gly:'◳', nm:'Banner' }, { t:'keyboard', gly:'⌨', nm:'Keyboard' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
-  ios:     [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'iosnav', gly:'‹', nm:'Nav bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'segmented', gly:'▢', nm:'Segment' }, { t:'iosswitch', gly:'◉', nm:'Switch' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'listitem', gly:'≣', nm:'List item' }, { t:'bottomsheet', gly:'⊔', nm:'Sheet' }, { t:'keyboard', gly:'⌨', nm:'Keyboard' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
+  mobile:  [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'appbar', gly:'⊤', nm:'App bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'keyboard', gly:'⌨', nm:'Keyboard' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
+  ios:     [{ t:'__frame', gly:'▯', nm:'Frame' }, { t:'statusbar', gly:'▭', nm:'Status' }, { t:'iosnav', gly:'‹', nm:'Nav bar' }, { t:'tabbar', gly:'⊞', nm:'Tab bar' }, { t:'iosswitch', gly:'◉', nm:'Switch' }, { t:'searchbar', gly:'⌕', nm:'Search' }, { t:'grouplist', gly:'☰', nm:'List' }, { t:'keyboard', gly:'⌨', nm:'Keyboard' }, { t:'pagecontrol', gly:'●', nm:'Dots' }, { t:'homeindicator', gly:'▬', nm:'Home' }],
 };
 function renderChromeGroup() {
   const m = currentMode();
   const ms = $('#modeSel'); if (ms) ms.value = m;
-  const title = $('#secChrome .chrome-title'); if (title) title.textContent = m === 'ios' ? 'iOS' : m === 'mobile' ? 'MOBILE' : 'WEB';
+  const title = $('#chromeTitle'); if (title) title.textContent = m === 'ios' ? 'iOS' : m === 'mobile' ? 'Mobile' : 'Web';
   const p = $('#chromePalette'); if (!p) return; p.innerHTML = '';
   (CHROME[m] || []).forEach(item => {
     const b = document.createElement('button'); b.className = 'pal-btn'; b.dataset.tool = item.t;
@@ -1375,6 +1469,27 @@ function renderChromeGroup() {
     }
     p.appendChild(b);
   });
+  applyCompFilter();
+}
+
+/* live search across all component tiles in the COMPONENTS section */
+function applyCompFilter() {
+  const inp = $('#compSearchInput'); if (!inp) return;
+  const q = inp.value.trim().toLowerCase();
+  const wrap = $('#compSearch'); if (wrap) wrap.classList.toggle('has-text', !!q);
+  let anyVisible = false;
+  document.querySelectorAll('#secComponents .comp-sub').forEach(sub => {
+    let subHas = false;
+    sub.querySelectorAll('.pal-btn').forEach(btn => {
+      const txt = (btn.textContent + ' ' + (btn.dataset.tool || '')).toLowerCase();
+      const show = !q || txt.includes(q);
+      btn.classList.toggle('hidden', !show);
+      if (show) subHas = true;
+    });
+    sub.classList.toggle('hidden', !subHas);
+    if (subHas) anyVisible = true;
+  });
+  const empty = $('#compEmpty'); if (empty) { empty.style.display = (q && !anyVisible) ? 'block' : 'none'; const qs = $('#compEmptyQ'); if (qs) qs.textContent = inp.value.trim(); }
 }
 
 let tool = 'pointer';
@@ -1399,6 +1514,7 @@ function buildPalette() {
       p.appendChild(b);
     });
   });
+  applyCompFilter();
 }
 function highlightTool() {
   document.querySelectorAll('.pal-btn').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
@@ -1432,7 +1548,16 @@ function fitGridToViewport() {
 }
 function placeAt(w, h, pos) {
   if (pos) return { col: Math.max(0, Math.min(doc.grid.cols - w, pos.col)), row: Math.max(0, Math.min(doc.grid.rows - h, pos.row)) };
-  return centerColRow(w, h);
+  // drop at the centre of the current viewport; if real content is already there, flow to its right
+  // (frames are containers → ignored, so you can still add elements inside a frame)
+  let { col, row } = centerColRow(w, h);
+  const obstacles = () => doc.objects
+    .filter(o => o.position && !o.frame && o.type !== 'connector')
+    .map(boundsOf)
+    .filter(b => col < b.col + b.w && col + w > b.col && row < b.row + b.h && row + h > b.row);
+  let guard = 0, hit;
+  while ((hit = obstacles()).length && guard++ < 300) col = Math.max(...hit.map(b => b.col + b.w)) + 2;
+  return { col: Math.max(0, Math.min(doc.grid.cols - w, col)), row: Math.max(0, Math.min(doc.grid.rows - h, row)) };
 }
 /* default footprint of a tool — used for drop placement + ghost preview */
 function toolSize(t) {
@@ -1544,14 +1669,19 @@ function insertFrame() {
   pushHistory();
   const fid = uid();
   const objs = [{ id: fid, type: 'box', layerId: doc.layers[0].id, position: { ...pos }, width: M.w, height: M.h, borderStyle: M.border, fill: 'transparent', name: M.label, groupId: gid, frame: true }];
+  // pin chrome to the frame's interior edges: status/nav stack from the top, tab bar + home
+  // indicator pin to the bottom — so nothing overlaps and nothing leaves a gap to the border.
+  const iL = pos.col + 1, iW = M.w - 2, iTop = pos.row + 1, iBottom = pos.row + M.h - 2;
+  const hasHome = M.chrome.includes('homeindicator');
+  let topY = iTop;
   M.chrome.forEach(ch => {
-    if (ch === 'browserTop') objs.push(mkComp('browser', pos.col + 1, pos.row + 1, M.w - 2, 5, { label: 'example.com' }, gid));
-    if (ch === 'statusbar') objs.push(mkComp('statusbar', pos.col + 1, pos.row + 1, M.w - 2, 1, { label: '9:41', body: '▮▮▮ 100%' }, gid));
-    if (ch === 'iosnav') objs.push(mkComp('iosnav', pos.col + 1, pos.row + 2, M.w - 2, 3, { label: 'Title', items: ['Back', ''] }, gid));
-    if (ch === 'appbar') objs.push(mkComp('appbar', pos.col + 1, pos.row + 2, M.w - 2, 3, { label: 'Title', icon: '≡', items: ['⋯'] }, gid));
-    if (ch === 'tabbar') objs.push(mkComp('tabbar', pos.col + 1, pos.row + M.h - 5, M.w - 2, 4, { items: ['Home', 'Search', 'Profile'], icons: ['⌂', '⌕', '☻'] }, gid));
-    if (ch === 'bottomnav') objs.push(mkComp('tabbar', pos.col + 1, pos.row + M.h - 2, M.w - 2, 1, { items: ['Home', 'Search', 'Me'] }, gid));
-    if (ch === 'homeindicator') objs.push(mkComp('homeindicator', pos.col + 1, pos.row + M.h - 1, M.w - 2, 1, {}, gid));
+    if (ch === 'browserTop') { objs.push(mkComp('browser', iL, topY, iW, 5, { label: 'example.com' }, gid)); topY += 5; }
+    if (ch === 'statusbar') { objs.push(mkComp('statusbar', iL, topY, iW, 1, { label: '9:41', body: '▮▮▮ 100%' }, gid)); topY += 1; }
+    if (ch === 'iosnav') { objs.push(mkComp('iosnav', iL, topY, iW, 3, { label: 'Title', items: ['Back', ''] }, gid)); topY += 3; }
+    if (ch === 'appbar') { objs.push(mkComp('appbar', iL, topY, iW, 3, { label: 'Title', icon: '≡', items: ['⋯'] }, gid)); topY += 3; }
+    if (ch === 'homeindicator') objs.push(mkComp('homeindicator', iL, iBottom, iW, 1, {}, gid));
+    if (ch === 'tabbar') { const th = 4, bottom = hasHome ? iBottom - 1 : iBottom; objs.push(mkComp('tabbar', iL, bottom - th + 1, iW, th, { items: ['Home', 'Search', 'Profile'], icons: ['⌂', '⌕', '☻'] }, gid)); }
+    if (ch === 'bottomnav') { const bottom = hasHome ? iBottom - 1 : iBottom; objs.push(mkComp('tabbar', iL, bottom, iW, 1, { items: ['Home', 'Search', 'Me'] }, gid)); }
   });
   objs.forEach(o => doc.objects.push(o));
   collapsedGroups.add(gid);   // frames start collapsed in the tree (tidier)
@@ -1735,7 +1865,6 @@ function renderProps() {
     if (ICONABLE.includes(ct)) html += '<div class="lbl-mini">Icon</div><button type="button" class="field icon-field" data-iconpick><span class="k">◇</span><span class="icon-cur">' + (o.icon || '∅ brak') + '</span><span class="icon-caret">▾</span></button>';
   }
   // layer
-  html += '<div class="lbl-mini">Layer</div><label class="field"><span class="k">⧉</span><select data-prop="layerId">' + doc.layers.map(l => `<option value="${l.id}" ${(o.layerId||'default')===l.id?'selected':''}>${l.name}</option>`).join('') + '</select></label>';
   // name
   html += '<div class="lbl-mini">Name (Figma layer)</div>' + fld('name','#',o.name||'');
   // annotation
@@ -1820,22 +1949,36 @@ function renderLayers() {
   doc.layers.forEach(l => {
     const objs = doc.objects.filter(o => (o.layerId || 'default') === l.id);
     const lcoll = collapsedLayers.has(l.id);
+    const editable = l.kind === 'screen';
+    const ico = l.kind === 'arrows' ? '↗' : l.kind === 'canvas' ? '▢' : '▣';
     const row = document.createElement('div');
     row.className = 'tree-row layer-row' + (l.visible ? '' : ' off') + (l.locked ? ' locked' : '');
     row.innerHTML = `<button class="tw-caret${objs.length ? '' : ' empty'}">${objs.length ? (lcoll ? '▸' : '▾') : '·'}</button>` +
       `<button class="eye" title="Pokaż/ukryj">${l.visible ? IC.eye : IC.eyeOff}</button>` +
       `<button class="lock" title="Zablokuj">${l.locked ? IC.lockClosed : IC.lockOpen}</button>` +
-      `<span class="nm" contenteditable>${l.name}</span>` +
+      `<span class="ty">${ico}</span>` +
+      `<span class="nm"${editable ? ' contenteditable' : ''}>${l.name}</span>` +
+      (l.kind === 'screen' ? `<button class="lcopy" title="Kopiuj ten ekran jako SVG → Figma">⧉</button>` : '') +
       `<span class="cnt">${l.locked ? '🔒' : (objs.length || '')}</span>`;
     row.querySelector('.tw-caret').onclick = (e) => { e.stopPropagation(); if (!objs.length) return; lcoll ? collapsedLayers.delete(l.id) : collapsedLayers.add(l.id); renderLayers(); };
     row.querySelector('.eye').onclick = (e) => { e.stopPropagation(); pushHistory(); l.visible = !l.visible; renderAll(); };
     row.querySelector('.lock').onclick = (e) => { e.stopPropagation(); pushHistory(); l.locked = !l.locked; renderAll(); };
-    const nm = row.querySelector('.nm');
-    nm.onblur = () => { l.name = nm.textContent.trim() || l.name; renderLayers(); };
-    nm.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); nm.blur(); } };
+    const copyBtn = row.querySelector('.lcopy');
+    if (copyBtn) copyBtn.onclick = (e) => { e.stopPropagation(); copyText(exportSVG(objs)); toast('Skopiowano ekran „' + l.name + '" → wklej w Figmie'); };
+    if (editable) {
+      const nm = row.querySelector('.nm');
+      nm.onblur = () => { const v = nm.textContent.trim(); const F = doc.objects.find(o => o.id === l.frameId); if (v && F) F.name = v; renderAll(); };
+      nm.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); nm.blur(); } };
+    }
     list.appendChild(row);
     if (lcoll) return;
     if (!objs.length) { const e = document.createElement('div'); e.className = 'tree-empty'; e.textContent = 'pusto'; list.appendChild(e); return; }
+    if (l.kind === 'screen') {
+      // the layer already represents the screen → list its members flat, frame first
+      const frame = objs.find(o => o.frame);
+      [frame, ...objs.filter(o => o !== frame)].filter(Boolean).forEach(o => list.appendChild(objTreeRow(o, 1)));
+      return;
+    }
     const seen = new Set();
     objs.forEach(o => {
       if (o.groupId) {
@@ -1857,11 +2000,26 @@ function renderLayers() {
       }
     });
   });
+
+  // virtual "Comments" layer — toggles annotation badges (and their SVG export)
+  const noted = doc.objects.filter(o => o.annotation);
+  if (noted.length) {
+    const row = document.createElement('div');
+    row.className = 'tree-row layer-row comments-row' + (showComments ? '' : ' off');
+    row.innerHTML = `<span class="tw-caret empty">·</span>` +
+      `<button class="eye" title="Pokaż/ukryj komentarze">${showComments ? IC.eye : IC.eyeOff}</button>` +
+      `<span class="lock" style="width:20px"></span>` +
+      `<span class="ty cm">✎</span>` +
+      `<span class="nm">Comments</span>` +
+      `<span class="cnt">${noted.length}</span>`;
+    row.querySelector('.eye').onclick = (e) => { e.stopPropagation(); showComments = !showComments; renderAll(); };
+    list.appendChild(row);
+  }
 }
 function layerLocked(o) { const l = doc.layers.find(x => x.id === (o.layerId || 'default')); return l && l.locked; }
 
 function updateNoteBadges() {
-  document.querySelectorAll('.wobj').forEach(el => { const o = objById(el.dataset.id); el.classList.toggle('note', !!(o && o.annotation)); });
+  document.querySelectorAll('.wobj').forEach(el => { const o = objById(el.dataset.id); el.classList.toggle('note', !!(o && o.annotation && showComments)); });
 }
 
 /* ============================================================
@@ -1982,9 +2140,7 @@ area.addEventListener('pointermove', (e) => {
 area.addEventListener('wheel', (e) => {
   if (!e.ctrlKey && !e.metaKey) return;
   e.preventDefault();
-  const f = e.deltaY < 0 ? 1.12 : 0.89;
-  view.zoom = Math.min(5, Math.max(0.2, view.zoom * f));
-  applyView();
+  zoomAt(e.deltaY < 0 ? 1.12 : 0.89, e.clientX, e.clientY);
 }, { passive: false });
 
 /* keyboard */
@@ -2042,15 +2198,17 @@ function pasteClip() {
 function serialize() { commitPage(); return { version: 2, code: doc.code, title: doc.title, grid: doc.grid, pages: doc.pages, activePage: doc.activePage }; }
 function exportJSON() { return JSON.stringify(serialize(), null, 2); }
 
-function exportSVG() {
+function exportSVG(only) {
   const cw = doc.grid.cellW, ch = doc.grid.cellH;
   const fs = (ch * 0.82).toFixed(1);
   const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const light = document.body.classList.contains('light');
   const bg = light ? '#ffffff' : '#242424', ink = light ? '#1f2228' : '#d6d9de';
+  const note = light ? { fill: '#fdf4d6', stroke: '#e0a83a', ink: '#7a5e16' } : { fill: '#3a2f18', stroke: '#e0a83a', ink: '#f0d79a' };
   const annoLines = o => (o.annotation || '').match(/.{1,28}(\s|$)/g) || [o.annotation];
   const layerVisible = id => { const l = doc.layers.find(x => x.id === (id || 'default')); return !l || l.visible; };
-  const visObjs = doc.objects.filter(o => layerVisible(o.layerId));
+  const onlySet = only ? new Set(only) : null;
+  const visObjs = doc.objects.filter(o => layerVisible(o.layerId) && (!onlySet || onlySet.has(o)));
 
   // crop tightly to the mockups (content bounds in px), incl. annotation note boxes
   const pad = 16; const NOTE_W = 200;
@@ -2065,11 +2223,11 @@ function exportSVG() {
   const ox = minX - pad, oy = minY - pad;
   const W = Math.round(maxX - minX + pad * 2), H = Math.round(maxY - minY + pad * 2);
 
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="'Courier New', 'Roboto Mono', ui-monospace, monospace" font-size="${fs}">\n`;
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="'JetBrains Mono', 'Courier New', ui-monospace, monospace" font-size="${fs}">\n`;
   svg += `<rect width="${W}" height="${H}" fill="${bg}"/>\n`;
   doc.layers.forEach(layer => {
     if (!layer.visible) return;
-    const objs = doc.objects.filter(o => (o.layerId||'default') === layer.id).sort((a,b)=>(a.zIndex??0)-(b.zIndex??0));
+    const objs = doc.objects.filter(o => (o.layerId||'default') === layer.id && (!onlySet || onlySet.has(o))).sort((a,b)=>(a.zIndex??0)-(b.zIndex??0));
     if (!objs.length) return;
     svg += `<g id="${esc(layer.name)}">\n`;
     objs.forEach(o => {
@@ -2096,18 +2254,18 @@ function exportSVG() {
     });
     svg += `</g>\n`;
   });
-  // annotations layer
-  const noted = visObjs.filter(o => o.annotation);
+  // annotations layer (skipped when the Comments layer is hidden)
+  const noted = showComments ? visObjs.filter(o => o.annotation) : [];
   if (noted.length) {
-    svg += `<g id="annotations">\n`;
+    svg += `<g id="Comments">\n`;
     noted.forEach((o) => {
       const bb = boundsOf(o);
       const nx = (bb.col + bb.w) * cw + 12 - ox, ny = bb.row * ch - oy;
       const lines = annoLines(o);
       const boxH = lines.length * 14 + 12;
-      svg += `<line x1="${(bb.col+bb.w)*cw - ox}" y1="${ny+ch}" x2="${nx}" y2="${ny+12}" stroke="#e0a83a" stroke-dasharray="3 3"/>`;
-      svg += `<rect x="${nx}" y="${ny}" width="${NOTE_W}" height="${boxH}" rx="4" fill="#3a2f18" stroke="#e0a83a"/>`;
-      lines.forEach((ln, li) => { svg += `<text x="${nx+8}" y="${ny+16+li*14}" fill="#f0d79a" font-family="sans-serif" font-size="11">${esc(ln.trim())}</text>`; });
+      svg += `<line x1="${(bb.col+bb.w)*cw - ox}" y1="${ny+ch}" x2="${nx}" y2="${ny+12}" stroke="${note.stroke}" stroke-dasharray="3 3"/>`;
+      svg += `<rect x="${nx}" y="${ny}" width="${NOTE_W}" height="${boxH}" rx="4" fill="${note.fill}" stroke="${note.stroke}"/>`;
+      lines.forEach((ln, li) => { svg += `<text x="${nx+8}" y="${ny+16+li*14}" fill="${note.ink}" font-family="sans-serif" font-size="11">${esc(ln.trim())}</text>`; });
     });
     svg += `</g>\n`;
   }
@@ -2128,12 +2286,14 @@ function b64urlToBytes(s) { s = s.replace(/-/g,'+').replace(/_/g,'/'); while (s.
 async function gzipString(str) { const cs = new CompressionStream('gzip'); const buf = await new Response(new Blob([str]).stream().pipeThrough(cs)).arrayBuffer(); return bytesToB64url(new Uint8Array(buf)); }
 async function gunzipToString(b64) { const ds = new DecompressionStream('gzip'); const buf = await new Response(new Blob([b64urlToBytes(b64)]).stream().pipeThrough(ds)).arrayBuffer(); return new TextDecoder().decode(buf); }
 
-async function shareLink() {
-  const json = JSON.stringify(serialize());
+async function linkForDoc(d) {
+  const json = JSON.stringify(d);
   try { if (typeof CompressionStream !== 'undefined') return location.origin + location.pathname + '#z=' + await gzipString(json); } catch (e) {}
   const b64 = btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   return location.origin + location.pathname + '#d=' + b64;
 }
+async function shareLink() { return linkForDoc(serialize()); }
+const cloudLink = (gistId) => location.origin + location.pathname + '#g=' + gistId;
 async function loadFromHash() {
   const h = location.hash.slice(1);
   if (!h) return false;
@@ -2204,6 +2364,8 @@ function loadDoc(data) {
   fitGridToContent();
   fitGridToViewport();
   renderAll();
+  if (doc.objects.length) zoomToFit();   // center the viewport on the prepared views
+  else centerEmptyView();                // empty file → open in the middle of the canvas
 }
 function fitGridToContent() {
   let maxC = doc.grid.cols, maxR = doc.grid.rows;
@@ -2214,32 +2376,49 @@ function fitGridToContent() {
 /* ============================================================
    Wire up controls
    ============================================================ */
-function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1900); }
+function toast(msg, icon) {
+  const t = $('#toast');
+  t.innerHTML = (icon ? '<span class="toast-ic"></span>' : '') + '<span class="toast-msg"></span>';
+  if (icon) t.querySelector('.toast-ic').textContent = icon;
+  t.querySelector('.toast-msg').textContent = msg;
+  t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2100);
+}
 
+{ const csi = $('#compSearchInput'), csc = $('#compSearchClear');
+  if (csi) csi.addEventListener('input', applyCompFilter);
+  if (csc) csc.onclick = () => { csi.value = ''; csi.focus(); applyCompFilter(); }; }
 $('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo;
 $('#btnDelete').onclick = () => { if (sel.size) deleteSel(); };
 $('#btnClear').onclick = () => { if (confirm('Wyczyścić całą makietę?')) { pushHistory(); doc.objects = []; sel.clear(); renderAll(); } };
-$('#zoomIn').onclick = () => { view.zoom = Math.min(5, view.zoom * 1.12); applyView(); };
-$('#zoomOut').onclick = () => { view.zoom = Math.max(0.2, view.zoom * 0.89); applyView(); };
-$('#zoomReset').onclick = () => { view.zoom = 1; view.panX = 0; view.panY = 0; applyView(); };
+$('#zoomIn').onclick = () => { const r = area.getBoundingClientRect(); zoomAt(1.12, r.left + r.width / 2, r.top + r.height / 2); };
+$('#zoomOut').onclick = () => { const r = area.getBoundingClientRect(); zoomAt(0.89, r.left + r.width / 2, r.top + r.height / 2); };
+$('#zoomReset').onclick = () => { view.zoom = 1; if (doc.objects.length) zoomToFit(); else centerEmptyView(); };
+// centre the viewport on the middle of the (huge) grid so an empty canvas opens in the
+// middle with room in every direction — not pinned to the top-left corner.
+function centerEmptyView() {
+  const area = $('#canvasArea').getBoundingClientRect();
+  const cw = doc.grid.cellW, ch = doc.grid.cellH;
+  view.panX = (area.width / 2) / view.zoom - (doc.grid.cols / 2) * cw;
+  view.panY = (area.height / 2) / view.zoom - (doc.grid.rows / 2) * ch;
+  applyView();
+}
 function zoomToFit() {
-  if (!doc.objects.length) { view.zoom = 1; view.panX = 0; view.panY = 0; applyView(); return; }
+  if (!doc.objects.length) { view.zoom = 1; centerEmptyView(); return; }
   let minC = Infinity, minR = Infinity, maxC = -Infinity, maxR = -Infinity;
   doc.objects.forEach(o => { const b = boundsOf(o); minC = Math.min(minC, b.col); minR = Math.min(minR, b.row); maxC = Math.max(maxC, b.col + b.w); maxR = Math.max(maxR, b.row + b.h); });
-  const area = $('#canvasArea'); const pad = 48;
+  const area = $('#canvasArea'); const pad = 56;
   const cw = Math.max(1, (maxC - minC) * cellW), ch = Math.max(1, (maxR - minR) * cellH);
-  view.zoom = Math.max(0.1, Math.min(2, (area.clientWidth - pad * 2) / cw, (area.clientHeight - pad * 2) / ch));
-  view.panX = 0; view.panY = 0; applyView();
-  requestAnimationFrame(() => {
-    const aRect = area.getBoundingClientRect(), artRect = $('#artboard').getBoundingClientRect();
-    view.panX = (aRect.left + pad) - (artRect.left + minC * cellW * view.zoom);
-    view.panY = (aRect.top + pad) - (artRect.top + minR * cellH * view.zoom);
-    applyView();
-  });
+  const z = Math.max(0.1, Math.min(2, (area.clientWidth - pad * 2) / cw, (area.clientHeight - pad * 2) / ch));
+  view.zoom = z; view.panX = 0; view.panY = 0; applyView();
+  // measure artboard origin at pan 0, then solve pan to center the content bbox (model: base + zoom·(pan+L))
+  const aRect = area.getBoundingClientRect(), artRect = $('#artboard').getBoundingClientRect();
+  const offX = Math.max(pad, (aRect.width - cw * z) / 2), offY = Math.max(pad, (aRect.height - ch * z) / 2);
+  view.panX = (aRect.left + offX - artRect.left) / z - minC * cellW;
+  view.panY = (aRect.top + offY - artRect.top) / z - minR * cellH;
+  applyView();
 }
 $('#zoomFit').onclick = zoomToFit;
 
-$('#addLayer').onclick = () => { pushHistory(); doc.layers.push({ id:uid(), name:'Layer '+(doc.layers.length+1), visible:true }); renderSidebar(); };
 $('#addPage').onclick = addPage;
 
 /* ---- projects dashboard (localStorage) ---- */
@@ -2307,10 +2486,11 @@ function localCard(e) {
   const card = document.createElement('div');
   card.className = 'dash-card' + (e.code === doc.code ? ' active' : '');
   let when = ''; try { when = e.updatedAt ? new Date(e.updatedAt).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' }) : ''; } catch (er) {}
-  card.innerHTML = '<div class="dc-acts"><button class="dc-dup" title="Duplikuj">⧉</button><button class="dc-del" title="Usuń">×</button></div>'
+  card.innerHTML = '<div class="dc-acts"><button class="dc-link" title="Kopiuj link do udostępnienia">' + IC.link + '</button><button class="dc-dup" title="Duplikuj">⧉</button><button class="dc-del" title="Usuń">×</button></div>'
     + '<div class="dc-icon">▤</div><div class="dc-name">' + escAttr(e.name || e.code) + '</div>'
     + '<div class="dc-meta">' + e.code + ' · ' + (e.pages || 1) + ' str. · ' + (e.objs || 0) + ' obj.' + (when ? ' · ' + when : '') + '</div>';
   card.onclick = (ev) => { if (ev.target.closest('.dc-acts')) return; openProject(e.code); };
+  card.querySelector('.dc-link').onclick = async (ev) => { ev.stopPropagation(); copyText(await linkForDoc(e.doc)); toast('Link skopiowany', '✓'); };
   card.querySelector('.dc-dup').onclick = (ev) => { ev.stopPropagation(); duplicateProject(e.code); };
   card.querySelector('.dc-del').onclick = (ev) => { ev.stopPropagation(); if (confirm('Usunąć „' + (e.name || e.code) + '" z dashboardu?')) { const pp = loadProjects(); delete pp[e.code]; saveProjects(pp); renderDashboard(); } };
   return card;
@@ -2319,10 +2499,11 @@ function cloudCard(e) {
   const card = document.createElement('div');
   card.className = 'dash-card' + (e.code === doc.code ? ' active' : '');
   let when = ''; try { when = e.updatedAt ? new Date(e.updatedAt).toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' }) : ''; } catch (er) {}
-  card.innerHTML = '<div class="dc-acts"><button class="dc-del" title="Usuń z chmury">×</button></div>'
+  card.innerHTML = '<div class="dc-acts"><button class="dc-link" title="Kopiuj link do udostępnienia">' + IC.link + '</button><button class="dc-del" title="Usuń z chmury">×</button></div>'
     + '<div class="dc-icon">☁</div><div class="dc-name">' + escAttr(e.name) + '</div>'
     + '<div class="dc-meta">' + e.code + (when ? ' · ' + when : '') + '</div>';
   card.onclick = (ev) => { if (ev.target.closest('.dc-acts')) return; openCloud(e.gistId); };
+  card.querySelector('.dc-link').onclick = (ev) => { ev.stopPropagation(); copyText(cloudLink(e.gistId)); toast('Link skopiowany', '✓'); };
   card.querySelector('.dc-del').onclick = async (ev) => { ev.stopPropagation(); if (!confirm('Usunąć z chmury „' + e.name + '"?')) return; try { await fetch('https://api.github.com/gists/' + e.gistId, { method: 'DELETE', headers: cloudHeaders() }); } catch (x) {} const m = cloudMapGet(); delete m[e.code]; cloudMapSet(m); renderDashboard(); };
   return card;
 }
@@ -2371,7 +2552,7 @@ function duplicateProject(code) {
 }
 function newProject() {
   saveCurrentProject(); collapsedLayers.clear(); collapsedGroups.clear();
-  doc = defaultDoc(); sel.clear(); fitGridToViewport(); renderAll();
+  doc = defaultDoc(); sel.clear(); fitGridToViewport(); renderAll(); centerEmptyView();
   $('#dashModal').classList.remove('open'); toast('Nowy projekt: ' + doc.code);
 }
 $('#dashBtn').onclick = openDashboard;
@@ -2389,7 +2570,7 @@ function applyTheme(t) {
   if (typeof cellW === 'number') render();
 }
 document.querySelectorAll('#themeSeg button').forEach(b => { b.onclick = () => applyTheme(b.dataset.theme); });
-(function () { let t = 'dark'; try { t = localStorage.getItem('wd-theme') || 'dark'; } catch (e) {} applyTheme(t); })();
+(function () { let t = 'light'; try { t = localStorage.getItem('wd-theme') || 'light'; } catch (e) {} applyTheme(t); })();
 $('#helpBtn').onclick = (e) => { e.stopPropagation(); $('#helpPop').classList.toggle('open'); };
 document.addEventListener('pointerdown', (e) => {
   const hp = $('#helpPop'); if (hp && hp.classList.contains('open') && !hp.contains(e.target) && e.target.id !== 'helpBtn') hp.classList.remove('open');
@@ -2561,10 +2742,11 @@ highlightTool();
 bindSections();
 fitGridToViewport();
 renderAll();
+centerEmptyView();   // open the empty canvas centred (room in every direction), not in a corner
 // keep the grid filling the screen as the window changes size
 let _rt;
 window.addEventListener('resize', () => { clearTimeout(_rt); _rt = setTimeout(() => { fitGridToViewport(); render(); }, 120); });
-requestAnimationFrame(() => { applyView(); });
+requestAnimationFrame(() => { applyView(); if (!doc.objects.length) centerEmptyView(); });
 // load a shared doc (if any) then auto-join its live room so cursors "just work"
 (async () => {
   const openedShared = await loadFromHash();
